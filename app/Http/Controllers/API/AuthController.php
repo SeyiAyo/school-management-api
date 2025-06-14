@@ -44,4 +44,37 @@ class AuthController extends Controller
         return response()->json(['token' => $admin->createToken('admin_token')->plainTextToken]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/admin/login",
+     *     summary="Login admin",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","password"},
+     *             @OA\Property(property="email", type="string", format="email"),
+     *             @OA\Property(property="password", type="string", format="password")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Logged in successfully"),
+     *     @OA\Response(response=401, description="Invalid credentials")
+     * )
+     */
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        $admin = Admin::where('email', $request->email)->first();
+
+        if (!$admin || !Hash::check($request->password, $admin->password)) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        return response()->json(['token' => $admin->createToken('admin_token')->plainTextToken]);
+    }
+
 }
