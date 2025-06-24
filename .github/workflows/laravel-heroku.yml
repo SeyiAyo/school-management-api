@@ -140,18 +140,18 @@ jobs:
         heroku config:set LOG_CHANNEL=errorlog --app ${{ secrets.HEROKU_APP_NAME }}
 
         # Run migrations
-        heroku run php artisan migrate --force --app ${{ secrets.HEROKU_APP_NAME }}
+        heroku run "php artisan migrate --force" --app ${{ secrets.HEROKU_APP_NAME }}
 
         # Generate Swagger documentation
-        heroku run php artisan l5-swagger:generate --app ${{ secrets.HEROKU_APP_NAME }}
+        heroku run "php artisan l5-swagger:generate" --app ${{ secrets.HEROKU_APP_NAME }}
 
         # Set proper permissions and links
-        heroku run php artisan storage:link --app ${{ secrets.HEROKU_APP_NAME }} || true
+        heroku run "php artisan storage:link" --app ${{ secrets.HEROKU_APP_NAME }} || true
         heroku run "chmod -R 775 storage bootstrap/cache" --app ${{ secrets.HEROKU_APP_NAME }}
 
         # Clear caches
-        heroku run php artisan config:clear --app ${{ secrets.HEROKU_APP_NAME }}
-        heroku run php artisan cache:clear --app ${{ secrets.HEROKU_APP_NAME }}
-        heroku run php artisan view:clear --app ${{ secrets.HEROKU_APP_NAME }}
+        heroku run "php artisan config:clear" --app ${{ secrets.HEROKU_APP_NAME }}
+        heroku run "php artisan cache:clear" --app ${{ secrets.HEROKU_APP_NAME }}
+        heroku run "php artisan view:clear" --app ${{ secrets.HEROKU_APP_NAME }}
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
