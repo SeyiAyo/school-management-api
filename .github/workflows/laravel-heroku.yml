@@ -95,7 +95,7 @@ jobs:
     # Create Heroku app if it doesn't exist yet
     - name: Install Heroku CLI
       run: curl https://cli-assets.heroku.com/install.sh | sh
-      
+
     - name: Check if Heroku app exists
       id: check_app
       run: |
@@ -106,13 +106,13 @@ jobs:
         fi
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        
+
     - name: Create Heroku app if needed
       if: steps.check_app.outputs.app_exists == 'false'
       run: heroku apps:create ${{ secrets.HEROKU_APP_NAME }} --buildpack heroku/php --stack heroku-22
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        
+
     - name: Deploy to Heroku
       uses: akhileshns/heroku-deploy@v3.12.13
       with:
@@ -123,3 +123,35 @@ jobs:
         usedocker: false
         docker_heroku_process_type: web
         dontautocreate: true # Don't try to auto-create the app
+
+    # Post-deployment configuration
+    - name: Set up Laravel on Heroku
+      run: |
+        # Generate APP_KEY if not set
+        if ! heroku config:get APP_KEY --app ${{ secrets.HEROKU_APP_NAME }} | grep -q "base64"; then
+          echo "Setting APP_KEY..."
+          heroku config:set APP_KEY=$(php artisan key:generate --show) --app ${{ secrets.HEROKU_APP_NAME }}
+        else
+          echo "APP_KEY already set"
+        fi
+
+        # Set essential Laravel configs
+        heroku config:set APP_ENV=production --app ${{ secrets.HEROKU_APP_NAME }}
+        heroku config:set LOG_CHANNEL=errorlog --app ${{ secrets.HEROKU_APP_NAME }}
+
+        # Run migrations
+        heroku run php artisan migrate --force --app ${{ secrets.HEROKU_APP_NAME }}
+
+        # Generate Swagger documentation
+        heroku run php artisan l5-swagger:generate --app ${{ secrets.HEROKU_APP_NAME }}
+
+        # Set proper permissions and links
+        heroku run php artisan storage:link --app ${{ secrets.HEROKU_APP_NAME }} || true
+        heroku run "chmod -R 775 storage bootstrap/cache" --app ${{ secrets.HEROKU_APP_NAME }}
+
+        # Clear caches
+        heroku run php artisan config:clear --app ${{ secrets.HEROKU_APP_NAME }}
+        heroku run php artisan cache:clear --app ${{ secrets.HEROKU_APP_NAME }}
+        heroku run php artisan view:clear --app ${{ secrets.HEROKU_APP_NAME }}
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
