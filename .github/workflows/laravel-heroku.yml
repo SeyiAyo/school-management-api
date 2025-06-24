@@ -36,8 +36,8 @@ jobs:
     - name: Update Dependencies
       run: composer update --no-ansi --no-interaction --prefer-dist
 
-    - name: Generate key
-      run: php artisan key:generate
+    # - name: Generate key
+    #   run: php artisan key:generate
 
     - name: Set Directory Permissions
       run: chmod -R 777 storage bootstrap/cache
