@@ -89,8 +89,8 @@ jobs:
       with:
         php-version: '8.2'
 
-    - name: Update Dependencies
-      run: composer update --no-ansi --no-interaction --prefer-dist
+    - name: Install Composer Dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction
 
     - name: Deploy to Heroku
       uses: akhileshns/heroku-deploy@v3.12.13
@@ -98,14 +98,9 @@ jobs:
         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
         heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
         heroku_email: ${{ secrets.HEROKU_EMAIL }}
-        procfile: "web: vendor/bin/heroku-php-apache2 public/"
-        healthcheck: "https://${{ secrets.HEROKU_APP_NAME }}.herokuapp.com/api/health"
-        checkstring: "ok"
-        delay: 5
-      env:
-        HD_APP_KEY: ${{ secrets.APP_KEY }}
-        HD_APP_ENV: production
-        HD_APP_DEBUG: "false"
-        HD_LOG_CHANNEL: stderr
-        HD_DB_CONNECTION: mysql
-        # Note: We don't need to set JAWSDB_URL here as it's automatically set by the JawsDB add-on
+        justlogin: false
+        usedocker: false
+        docker_heroku_process_type: web
+        stack: "heroku-22"
+        buildpack: "heroku/php"
+      # No environment variables here - using existing Heroku config vars
