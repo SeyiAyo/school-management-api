@@ -92,6 +92,27 @@ jobs:
     - name: Install Composer Dependencies
       run: composer install --no-dev --optimize-autoloader --no-interaction
 
+    # Create Heroku app if it doesn't exist yet
+    - name: Install Heroku CLI
+      run: curl https://cli-assets.heroku.com/install.sh | sh
+      
+    - name: Check if Heroku app exists
+      id: check_app
+      run: |
+        if heroku apps:info "${{ secrets.HEROKU_APP_NAME }}" --json >/dev/null 2>&1; then
+          echo "app_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "app_exists=false" >> $GITHUB_OUTPUT
+        fi
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        
+    - name: Create Heroku app if needed
+      if: steps.check_app.outputs.app_exists == 'false'
+      run: heroku apps:create ${{ secrets.HEROKU_APP_NAME }} --buildpack heroku/php --stack heroku-22
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        
     - name: Deploy to Heroku
       uses: akhileshns/heroku-deploy@v3.12.13
       with:
@@ -101,6 +122,4 @@ jobs:
         justlogin: false
         usedocker: false
         docker_heroku_process_type: web
-        stack: "heroku-22"
-        buildpack: "heroku/php"
-      # No environment variables here - using existing Heroku config vars
+        dontautocreate: true # Don't try to auto-create the app
