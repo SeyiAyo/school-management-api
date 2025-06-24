@@ -1,0 +1,27 @@
+{
+  "name": "School Management API",
+  "description": "A Laravel-based school management API system",
+  "keywords": ["php", "laravel", "api", "school", "management"],
+  "addons": [
+    "jawsdb"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/php"
+    }
+  ],
+  "env": {
+    "APP_DEBUG": {
+      "value": "false"
+    },
+    "APP_ENV": {
+      "value": "production"
+    },
+    "LOG_CHANNEL": {
+      "value": "stderr"
+    }
+  },
+  "scripts": {
+    "postdeploy": "php artisan migrate --force"
+  }
+}

@@ -21,6 +21,11 @@ use App\Http\Controllers\API\SchoolClass;
 |
 */
 
+// Health Check Endpoint for CI/CD
+Route::get('/health', function() {
+    return response()->json(['status' => 'ok']);
+});
+
 // Admin Authentication Routes
 Route::post('/admin/register', [AuthController::class, 'register']);
 Route::post('/admin/login', [AuthController::class, 'login']);
