@@ -10,8 +10,7 @@ class Teacher extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'email',
+        'user_id',
         'phone',
         'subject_specialty',
         'qualification',
@@ -19,4 +18,29 @@ class Teacher extends Model
         'address',
         'gender',
     ];
+    
+    /**
+     * Get the user that owns the teacher profile.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+    
+    /**
+     * Get the classes taught by the teacher.
+     */
+    public function classes()
+    {
+        return $this->hasMany(SchoolClass::class);
+    }
 }

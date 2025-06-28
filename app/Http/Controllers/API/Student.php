@@ -5,9 +5,23 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Student as StudentModel;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class Student extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum', ['except' => ['index', 'show']]);
+        $this->authorizeResource(StudentModel::class, 'student');
+    }
     /**
      * @OA\Get(
      *     path="/api/students",
@@ -51,18 +65,51 @@ class Student extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:students',
+            'email' => 'required|email|unique:users',
             'phone' => 'nullable',
             'date_of_birth' => 'nullable|date',
             'address' => 'nullable',
             'gender' => 'nullable',
-            'parent_name' => 'nullable',
-            'parent_phone' => 'nullable',
-            'parent_email' => 'nullable|email',
+            'parent_id' => 'nullable|exists:parents,id',
         ]);
-
-        $student = StudentModel::create($request->all());
-        return response()->json($student, 201);
+        
+        // Generate a random password
+        $password = Str::random(8);
+        
+        DB::beginTransaction();
+        
+        try {
+            // Create user with student role
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($password),
+                'role' => 'student',
+            ]);
+            
+            // Create student profile
+            $student = StudentModel::create([
+                'user_id' => $user->id,
+                'phone' => $request->phone,
+                'date_of_birth' => $request->date_of_birth,
+                'address' => $request->address,
+                'gender' => $request->gender,
+                'parent_id' => $request->parent_id,
+            ]);
+            
+            DB::commit();
+            
+            // Return the student data along with the plain text password
+            return response()->json([
+                'user' => $user,
+                'student' => $student,
+                'generated_password' => $password
+            ], 201);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to create student', 'error' => $e->getMessage()], 500);
+        }
     }
 
     /**

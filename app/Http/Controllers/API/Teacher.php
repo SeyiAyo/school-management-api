@@ -5,9 +5,23 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Teacher as TeacherModel;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class Teacher extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum', ['except' => ['index', 'show']]);
+        $this->authorizeResource(TeacherModel::class, 'teacher');
+    }
     /**
      * @OA\Get(
      *     path="/api/teachers",
@@ -56,7 +70,7 @@ class Teacher extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:teachers',
+            'email' => 'required|email|unique:users',
             'phone' => 'nullable',
             'subject_specialty' => 'nullable',
             'qualification' => 'nullable',
@@ -64,9 +78,45 @@ class Teacher extends Controller
             'address' => 'nullable',
             'gender' => 'nullable',
         ]);
-
-        $teacher = TeacherModel::create($request->all());
-        return response()->json($teacher, 201);
+        
+        // Generate a random password
+        $password = Str::random(8);
+        
+        DB::beginTransaction();
+        
+        try {
+            // Create user with teacher role
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($password),
+                'role' => 'teacher',
+            ]);
+            
+            // Create teacher profile
+            $teacher = TeacherModel::create([
+                'user_id' => $user->id,
+                'phone' => $request->phone,
+                'subject_specialty' => $request->subject_specialty,
+                'qualification' => $request->qualification,
+                'date_of_birth' => $request->date_of_birth,
+                'address' => $request->address,
+                'gender' => $request->gender,
+            ]);
+            
+            DB::commit();
+            
+            // Return the teacher data along with the plain text password
+            return response()->json([
+                'user' => $user,
+                'teacher' => $teacher,
+                'generated_password' => $password
+            ], 201);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to create teacher', 'error' => $e->getMessage()], 500);
+        }
     }
 
     /**

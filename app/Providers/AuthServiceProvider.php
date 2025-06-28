@@ -2,6 +2,14 @@
 
 namespace App\Providers;
 
+
+use App\Models\Student;
+use App\Models\Teacher;
+use App\Models\ParentModel;
+
+use App\Policies\StudentPolicy;
+use App\Policies\TeacherPolicy;
+use App\Policies\ParentPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 
@@ -13,7 +21,10 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        // 'App\Models\Model' => 'App\Policies\ModelPolicy',
+
+        Student::class => StudentPolicy::class,
+        Teacher::class => TeacherPolicy::class,
+        ParentModel::class => ParentPolicy::class,
     ];
 
     /**
@@ -25,6 +36,21 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        // Define role-based gates
+        Gate::define('admin-access', function ($user) {
+            return $user->role === 'admin';
+        });
+
+        Gate::define('teacher-access', function ($user) {
+            return $user->role === 'teacher' || $user->role === 'admin';
+        });
+
+        Gate::define('student-access', function ($user) {
+            return $user->role === 'student' || $user->role === 'admin' || $user->role === 'teacher';
+        });
+
+        Gate::define('parent-access', function ($user) {
+            return $user->role === 'parent' || $user->role === 'admin';
+        });
     }
 }

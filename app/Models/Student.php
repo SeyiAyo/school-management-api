@@ -9,17 +9,45 @@ class Student extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'name',
-        'email',
+        'user_id',
         'phone',
         'date_of_birth',
         'address',
         'gender',
-        'parent_name',
-        'parent_phone',
-        'parent_email',
+        'parent_id',
     ];
+    
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'remember_token',
+    ];
+    
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+    
+    /**
+     * Get the user that owns the student profile.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
     
     /**
      * The classes that the student belongs to.
@@ -35,5 +63,13 @@ class Student extends Model
     public function attendances()
     {
         return $this->hasMany(Attendance::class);
+    }
+    
+    /**
+     * Get the parent of the student.
+     */
+    public function parent()
+    {
+        return $this->belongsTo(ParentModel::class, 'parent_id');
     }
 }
