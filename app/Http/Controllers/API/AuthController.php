@@ -3,16 +3,21 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admin;
+
+use App\Models\Student;
+use App\Models\Teacher;
+use App\Models\ParentModel;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     /**
      * @OA\Post(
-     *     path="/api/admin/register",
-     *     summary="Register new admin",
+     *     path="/api/register",
+     *     summary="Register new user with admin role",
      *     tags={"Authentication"},
      *     @OA\RequestBody(
      *         required=true,
@@ -31,23 +36,33 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:admins',
+            'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
         ]);
 
-        $admin = Admin::create([
+        // Create user with admin role
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => 'admin',
         ]);
 
-        return response()->json(['token' => $admin->createToken('admin_token')->plainTextToken]);
+        // Create token with admin ability
+        $token = $user->createToken('token', ['role:admin'])->plainTextToken;
+
+        return response()->json([
+            'user' => $user,
+            'role' => 'admin',
+            'token' => $token,
+            'token_type' => 'Bearer',
+        ]);
     }
 
     /**
      * @OA\Post(
-     *     path="/api/admin/login",
-     *     summary="Login admin",
+     *     path="/api/login",
+     *     summary="Login for all user types",
      *     tags={"Authentication"},
      *     @OA\RequestBody(
      *         required=true,
@@ -68,13 +83,69 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $admin = Admin::where('email', $request->email)->first();
-
-        if (!$admin || !Hash::check($request->password, $admin->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+        // Find user in the central users table
+        $user = User::where('email', $request->email)->first();
+        
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.'],
+            ]);
         }
+        
+        // Create token with role-specific ability
+        $token = $user->createToken('token', ['role:' . $user->role])->plainTextToken;
+        
+        // Get the profile data based on role
+        $profile = null;
+        switch ($user->role) {
+            case 'teacher':
+                $profile = $user->teacher;
+                break;
+            case 'student':
+                $profile = $user->student;
+                break;
+            case 'parent':
+                $profile = $user->parent;
+                break;
+            default:
+                $profile = null;
+                break;
+        }
+        
+        return response()->json([
+            'user' => $user,
+            'profile' => $profile,
+            'role' => $user->role,
+            'token' => $token,
+            'token_type' => 'Bearer',
+        ]);
 
-        return response()->json(['token' => $admin->createToken('admin_token')->plainTextToken]);
+        // No user found with these credentials
+        throw ValidationException::withMessages([
+            'email' => ['The provided credentials are incorrect.'],
+        ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/logout",
+     *     summary="Logout user",
+     *     tags={"Authentication"},
+     *     security={{
+     *         "bearerAuth": {}
+     *     }},
+     *     @OA\Response(response=200, description="Logged out successfully"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function logout(Request $request)
+    {
+        // Make sure we're using Laravel Sanctum for token management
+        if ($request->user()) {
+            // Revoke the token that was used to authenticate the current request
+            $request->user()->tokens()->where('id', $request->user()->currentAccessToken()->id)->delete();
+        }
+
+        return response()->json(['message' => 'Logged out successfully']);
+    }
 }
