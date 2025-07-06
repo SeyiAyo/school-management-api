@@ -207,72 +207,6 @@
                 ]
             }
         },
-        "/api/parent/login": {
-            "post": {
-                "tags": [
-                    "Parent Authentication"
-                ],
-                "summary": "Parent login",
-                "operationId": "38d920abc427161bd15e552190686394",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "email",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Login successful"
-                    },
-                    "401": {
-                        "description": "Invalid credentials"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    }
-                }
-            }
-        },
-        "/api/parent/logout": {
-            "post": {
-                "tags": [
-                    "Parent Authentication"
-                ],
-                "summary": "Parent logout",
-                "operationId": "ac808eda36c6b5798fd566322f90ed96",
-                "responses": {
-                    "200": {
-                        "description": "Logout successful"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/parents": {
             "get": {
                 "tags": [
@@ -733,72 +667,6 @@
                 }
             }
         },
-        "/api/student/login": {
-            "post": {
-                "tags": [
-                    "Student Authentication"
-                ],
-                "summary": "Student login",
-                "operationId": "0d20bb328887aeffeeadbc6442b3930b",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "email",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Login successful"
-                    },
-                    "401": {
-                        "description": "Invalid credentials"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    }
-                }
-            }
-        },
-        "/api/student/logout": {
-            "post": {
-                "tags": [
-                    "Student Authentication"
-                ],
-                "summary": "Student logout",
-                "operationId": "60c392ebbfd34a256691edcf054dcf9f",
-                "responses": {
-                    "200": {
-                        "description": "Logout successful"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/teachers": {
             "get": {
                 "tags": [
@@ -1027,72 +895,6 @@
                     }
                 ]
             }
-        },
-        "/api/teacher/login": {
-            "post": {
-                "tags": [
-                    "Teacher Authentication"
-                ],
-                "summary": "Teacher login",
-                "operationId": "f52062c9558ac7e2af1c6bad4af90e1b",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "email",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Login successful"
-                    },
-                    "401": {
-                        "description": "Invalid credentials"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    }
-                }
-            }
-        },
-        "/api/teacher/logout": {
-            "post": {
-                "tags": [
-                    "Teacher Authentication"
-                ],
-                "summary": "Teacher logout",
-                "operationId": "6a25ffa5cfc2b101e213380559d3d634",
-                "responses": {
-                    "200": {
-                        "description": "Logout successful"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
         }
     },
     "components": {
@@ -1118,10 +920,6 @@
             "description": "Dashboard"
         },
         {
-            "name": "Parent Authentication",
-            "description": "Parent Authentication"
-        },
-        {
             "name": "Parents",
             "description": "Parents"
         },
@@ -1134,16 +932,8 @@
             "description": "Students"
         },
         {
-            "name": "Student Authentication",
-            "description": "Student Authentication"
-        },
-        {
             "name": "Teachers",
             "description": "Teachers"
-        },
-        {
-            "name": "Teacher Authentication",
-            "description": "Teacher Authentication"
         }
     ]
 }
