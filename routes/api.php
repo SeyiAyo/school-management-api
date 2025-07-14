@@ -39,3 +39,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/classes', [SchoolClass::class, 'store']);
     Route::post('/attendance', [Attendance::class, 'mark']);
 });
+
+// CORS: Catch-all OPTIONS route for preflight requests
+Route::options('/{any}', function () {
+    return response()->json([], 204);
+})->where('any', '.*');
