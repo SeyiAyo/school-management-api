@@ -57,5 +57,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // CORS: Catch-all OPTIONS route for preflight requests
 Route::options('/{any}', function () {
-    return response()->json([], 204);
+    return response('', 204)
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Origin, Authorization');
 })->where('any', '.*');
+
+// CORS test route with explicit headers
+Route::get('/cors-test', function () {
+    return response()
+        ->json(['message' => 'CORS OK'])
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Origin, Authorization');
+});
