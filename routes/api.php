@@ -35,6 +35,11 @@ Route::get('/health', function() {
     return response()->json(['status' => 'ok']);
 });
 
+// CORS test
+Route::get('/cors-test', function () {
+    return response()->json(['message' => 'CORS OK']);
+});
+
 // Authentication Routes
 Route::post('/register', [AuthController::class, 'register']); // Admin registration only
 Route::post('/login', [AuthController::class, 'login']); // Unified login for all user types
