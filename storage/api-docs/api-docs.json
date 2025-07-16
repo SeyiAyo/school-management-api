@@ -486,13 +486,146 @@
                     "Dashboard"
                 ],
                 "summary": "Get dashboard data",
+                "description": "Retrieves key metrics and statistics for the admin dashboard",
                 "operationId": "5968da48cceac74e95cc78c0633f5ec7",
                 "responses": {
                     "200": {
-                        "description": "Dashboard data retrieved successfully"
+                        "description": "Dashboard data retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dashboard data retrieved successfully"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "totals": {
+                                                    "properties": {
+                                                        "students": {
+                                                            "type": "integer",
+                                                            "example": 150
+                                                        },
+                                                        "teachers": {
+                                                            "type": "integer",
+                                                            "example": 20
+                                                        },
+                                                        "classes": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "attendance_today": {
+                                                    "properties": {
+                                                        "present": {
+                                                            "type": "integer",
+                                                            "example": 120
+                                                        },
+                                                        "absent": {
+                                                            "type": "integer",
+                                                            "example": 20
+                                                        },
+                                                        "late": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 150
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "recent_activities": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "attendance"
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "New attendance recorded"
+                                                            },
+                                                            "time": {
+                                                                "type": "string",
+                                                                "example": "2 hours ago"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to load dashboard data"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 500
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
