@@ -22,7 +22,7 @@ use App\Http\Controllers\API\ParentController;
 */
 
 // Apply CORS middleware to all API routes
-Route::middleware('cors')->group(function () {
+Route::middleware(\App\Http\Middleware\DebugCorsMiddleware::class)->group(function () {
     // CORS test endpoint
     Route::get('/test-cors', function () {
         return response()->json([
@@ -58,13 +58,4 @@ Route::middleware('cors')->group(function () {
             ->header('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Origin, Authorization, Accept, X-Requested-With')
             ->header('Access-Control-Allow-Credentials', 'true');
     })->where('any', '.*');
-});
-
-// CORS test route with explicit headers
-Route::get('/cors-test', function () {
-    return response()
-        ->json(['message' => 'CORS OK'])
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Origin, Authorization');
 });
