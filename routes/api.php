@@ -8,11 +8,7 @@ use App\Http\Controllers\API\Teacher;
 use App\Http\Controllers\API\Student;
 use App\Http\Controllers\API\Attendance;
 use App\Http\Controllers\API\SchoolClass;
-use App\Http\Controllers\API\StudentAuthController;
-use App\Http\Controllers\API\TeacherAuthController;
-use App\Http\Controllers\API\ParentAuthController;
 use App\Http\Controllers\API\ParentController;
-
 
 /*
 |--------------------------------------------------------------------------
@@ -25,28 +21,44 @@ use App\Http\Controllers\API\ParentController;
 |
 */
 
-// Authentication Routes
-Route::post('/register', [AuthController::class, 'register']); // Admin registration only
-Route::post('/login', [AuthController::class, 'login']); // Unified login for all user types
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']); // Unified logout
+// Apply CORS middleware to all API routes
+Route::middleware('cors')->group(function () {
+    // CORS test endpoint
+    Route::get('/test-cors', function () {
+        return response()->json([
+            'message' => 'CORS is working!',
+            'timestamp' => now()->toDateTimeString()
+        ]);
+    });
 
-// Admin Dashboard Routes
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/admin/dashboard', [DashboardController::class, 'index']);
-    Route::apiResource('/teachers', Teacher::class);
-    Route::apiResource('/students', Student::class);
-    Route::apiResource('/parents', ParentController::class);
-    Route::post('/classes', [SchoolClass::class, 'store']);
-    Route::post('/attendance', [Attendance::class, 'mark']);
+    // Public routes
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+
+    // Protected routes (require authentication)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+        
+        // Resource routes
+        Route::apiResource('/teachers', Teacher::class);
+        Route::apiResource('/students', Student::class);
+        Route::apiResource('/parents', ParentController::class);
+        
+        // Other protected routes
+        Route::post('/classes', [SchoolClass::class, 'store']);
+        Route::post('/attendance', [Attendance::class, 'mark']);
+    });
+
+    // Catch-all OPTIONS route for preflight requests
+    Route::options('/{any}', function () {
+        return response('', 204)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE, PATCH')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Origin, Authorization, Accept, X-Requested-With')
+            ->header('Access-Control-Allow-Credentials', 'true');
+    })->where('any', '.*');
 });
-
-// CORS: Catch-all OPTIONS route for preflight requests
-Route::options('/{any}', function () {
-    return response('', 204)
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Origin, Authorization');
-})->where('any', '.*');
 
 // CORS test route with explicit headers
 Route::get('/cors-test', function () {
