@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Teacher;
@@ -10,7 +10,7 @@ use App\Models\Student;
 use App\Models\Attendance;
 use App\Models\SchoolClass;
 
-class DashboardController extends AuthController
+class DashboardController extends Controller
 {
     /**
      * @OA\Get(
