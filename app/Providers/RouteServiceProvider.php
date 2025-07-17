@@ -28,6 +28,9 @@ class RouteServiceProvider extends ServiceProvider
     {
         $this->configureRateLimiting();
 
+        // Explicit route model binding
+        Route::model('teacher', \App\Models\Teacher::class);
+
         $this->routes(function () {
             Route::prefix('api')
                 ->middleware('api')

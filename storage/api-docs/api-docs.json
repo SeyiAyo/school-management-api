@@ -486,13 +486,146 @@
                     "Dashboard"
                 ],
                 "summary": "Get dashboard data",
+                "description": "Retrieves key metrics and statistics for the admin dashboard",
                 "operationId": "5968da48cceac74e95cc78c0633f5ec7",
                 "responses": {
                     "200": {
-                        "description": "Dashboard data retrieved successfully"
+                        "description": "Dashboard data retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dashboard data retrieved successfully"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "totals": {
+                                                    "properties": {
+                                                        "students": {
+                                                            "type": "integer",
+                                                            "example": 150
+                                                        },
+                                                        "teachers": {
+                                                            "type": "integer",
+                                                            "example": 20
+                                                        },
+                                                        "classes": {
+                                                            "type": "integer",
+                                                            "example": 15
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "attendance_today": {
+                                                    "properties": {
+                                                        "present": {
+                                                            "type": "integer",
+                                                            "example": 120
+                                                        },
+                                                        "absent": {
+                                                            "type": "integer",
+                                                            "example": 20
+                                                        },
+                                                        "late": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 150
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "recent_activities": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "attendance"
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "New attendance recorded"
+                                                            },
+                                                            "time": {
+                                                                "type": "string",
+                                                                "example": "2 hours ago"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to load dashboard data"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 500
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -968,13 +1101,74 @@
                     "Teachers"
                 ],
                 "summary": "Get all teachers",
+                "description": "Retrieves a list of all teachers with their user details",
                 "operationId": "184d1632775acc895c4295a66702c29a",
                 "responses": {
                     "200": {
-                        "description": "List of teachers retrieved successfully"
+                        "description": "List of teachers retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Teachers retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Teacher"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthorized"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to retrieve teachers"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -988,42 +1182,74 @@
                     "Teachers"
                 ],
                 "summary": "Create a new teacher",
+                "description": "Creates a new teacher with the provided information and generates a random password",
                 "operationId": "949751d138c905b8b80f5e6191438729",
                 "requestBody": {
+                    "description": "Teacher data",
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
                                     "name",
-                                    "email"
+                                    "email",
+                                    "qualification"
                                 ],
                                 "properties": {
                                     "name": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "John Doe"
                                     },
                                     "email": {
                                         "type": "string",
-                                        "format": "email"
+                                        "format": "email",
+                                        "example": "teacher@example.com"
                                     },
                                     "phone": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "example": "+1234567890"
                                     },
                                     "subject_specialty": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Mathematics"
                                     },
                                     "qualification": {
-                                        "type": "string"
+                                        "description": "Teacher's highest educational qualification",
+                                        "type": "string",
+                                        "enum": [
+                                            "High School Diploma",
+                                            "Associate Degree",
+                                            "Bachelor's Degree",
+                                            "Master's Degree",
+                                            "Doctorate (Ph.D.)",
+                                            "Professional Certification",
+                                            "Trade School Diploma",
+                                            "Postgraduate Certificate/Diploma",
+                                            "Other"
+                                        ],
+                                        "example": "Master's Degree"
                                     },
                                     "date_of_birth": {
                                         "type": "string",
-                                        "format": "date"
+                                        "format": "date",
+                                        "example": "1990-01-01"
                                     },
                                     "address": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "123 Main St, City, Country"
                                     },
                                     "gender": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "enum": [
+                                            "male",
+                                            "female",
+                                            "other"
+                                        ],
+                                        "example": "male"
                                     }
                                 },
                                 "type": "object"
@@ -1033,13 +1259,166 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Teacher created successfully"
-                    },
-                    "422": {
-                        "description": "Validation error"
+                        "description": "Teacher created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Teacher created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "teacher@example.com"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "teacher": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "subject_specialty": {
+                                                            "type": "string",
+                                                            "example": "Mathematics"
+                                                        },
+                                                        "qualification": {
+                                                            "type": "string",
+                                                            "example": "Master's Degree"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "generated_password": {
+                                                    "type": "string",
+                                                    "example": "aBcDeFgH"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthorized"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Forbidden"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The email has already been taken."
+                                                    }
+                                                },
+                                                "qualification": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected qualification is invalid. Valid options are: High School Diploma, Associate Degree, ..."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to create teacher"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1055,11 +1434,13 @@
                     "Teachers"
                 ],
                 "summary": "Get a specific teacher",
+                "description": "Retrieves detailed information about a specific teacher including their user details",
                 "operationId": "f289578ee2709fd0f758a4f895cd91e1",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID of the teacher to retrieve",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -1068,13 +1449,107 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Teacher details retrieved successfully"
-                    },
-                    "404": {
-                        "description": "Teacher not found"
+                        "description": "Teacher details retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Teacher retrieved successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TeacherWithUser"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthorized"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Forbidden"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Teacher not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Teacher not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to retrieve teacher"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1088,11 +1563,13 @@
                     "Teachers"
                 ],
                 "summary": "Update a teacher",
+                "description": "Updates the specified teacher with the provided information",
                 "operationId": "e56e1d4798971811ebf91574b6f3444c",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID of the teacher to update",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -1100,36 +1577,73 @@
                     }
                 ],
                 "requestBody": {
+                    "description": "Teacher data to update",
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "properties": {
                                     "name": {
-                                        "type": "string"
+                                        "description": "Teacher's full name",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "John Doe"
                                     },
                                     "email": {
+                                        "description": "Teacher's email address (must be unique)",
                                         "type": "string",
-                                        "format": "email"
+                                        "format": "email",
+                                        "example": "updated.teacher@example.com"
                                     },
                                     "phone": {
-                                        "type": "string"
+                                        "description": "Teacher's contact number",
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "example": "+1234567890"
                                     },
                                     "subject_specialty": {
-                                        "type": "string"
+                                        "description": "Teacher's subject specialty",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Advanced Mathematics"
                                     },
                                     "qualification": {
-                                        "type": "string"
+                                        "description": "Teacher's highest educational qualification",
+                                        "type": "string",
+                                        "enum": [
+                                            "High School Diploma",
+                                            "Associate Degree",
+                                            "Bachelor's Degree",
+                                            "Master's Degree",
+                                            "Doctorate (Ph.D.)",
+                                            "Professional Certification",
+                                            "Trade School Diploma",
+                                            "Postgraduate Certificate/Diploma",
+                                            "Other"
+                                        ],
+                                        "example": "Doctorate (Ph.D.)"
                                     },
                                     "date_of_birth": {
+                                        "description": "Teacher's date of birth",
                                         "type": "string",
-                                        "format": "date"
+                                        "format": "date",
+                                        "example": "1985-05-15"
                                     },
                                     "address": {
-                                        "type": "string"
+                                        "description": "Teacher's full address",
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "456 University Ave, City, Country"
                                     },
                                     "gender": {
-                                        "type": "string"
+                                        "description": "Teacher's gender",
+                                        "type": "string",
+                                        "enum": [
+                                            "male",
+                                            "female",
+                                            "other"
+                                        ],
+                                        "example": "male"
                                     }
                                 },
                                 "type": "object"
@@ -1139,16 +1653,159 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Teacher updated successfully"
+                        "description": "Teacher updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Teacher updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/TeacherWithUser"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
-                    "404": {
-                        "description": "Teacher not found"
-                    },
-                    "422": {
-                        "description": "Validation error"
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No data provided for update"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthorized"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Forbidden"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Teacher not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Teacher not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The email has already been taken."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to update teacher"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1162,11 +1819,13 @@
                     "Teachers"
                 ],
                 "summary": "Delete a teacher",
+                "description": "Permanently deletes a teacher and their associated user account",
                 "operationId": "df6d3fe7560e0c5914b17ccd7769dbeb",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID of the teacher to delete",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -1175,13 +1834,108 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Teacher deleted successfully"
-                    },
-                    "404": {
-                        "description": "Teacher not found"
+                        "description": "Teacher deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Teacher deleted successfully"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "Unauthorized"
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Forbidden"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Teacher not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Teacher not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to delete teacher"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1193,6 +1947,145 @@
         }
     },
     "components": {
+        "schemas": {
+            "Teacher": {
+                "required": [
+                    "user_id",
+                    "qualification"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+1234567890",
+                        "nullable": true
+                    },
+                    "subject_specialty": {
+                        "type": "string",
+                        "example": "Mathematics",
+                        "nullable": true
+                    },
+                    "qualification": {
+                        "type": "string",
+                        "enum": [
+                            "High School Diploma",
+                            "Associate Degree",
+                            "Bachelor's Degree",
+                            "Master's Degree",
+                            "Doctorate (Ph.D.)",
+                            "Professional Certification",
+                            "Trade School Diploma",
+                            "Postgraduate Certificate/Diploma",
+                            "Other"
+                        ],
+                        "example": "Master's Degree"
+                    },
+                    "date_of_birth": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "1990-01-01",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "123 Main St, City, Country",
+                        "nullable": true
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female",
+                            "other"
+                        ],
+                        "example": "male",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "TeacherWithUser": {
+                "type": "object",
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/Teacher"
+                    },
+                    {
+                        "properties": {
+                            "user": {
+                                "$ref": "#/components/schemas/User"
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "User": {
+                "required": [
+                    "name",
+                    "email",
+                    "password",
+                    "role"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "user@example.com"
+                    },
+                    "email_verified_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "admin",
+                            "teacher",
+                            "student",
+                            "parent"
+                        ],
+                        "example": "teacher"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            }
+        },
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",

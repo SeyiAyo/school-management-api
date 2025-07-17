@@ -31,10 +31,8 @@ class TeacherPolicy
      */
     public function view(User $user, Teacher $teacher)
     {
-        // Admin can view any teacher
-        // Teachers can view their own profile
-        return $user->role === 'admin' || 
-               ($user->role === 'teacher' && $user->id === $teacher->user_id);
+        // Admin and teachers can view teacher details
+        return in_array($user->role, ['admin', 'teacher']);
     }
 
     /**
