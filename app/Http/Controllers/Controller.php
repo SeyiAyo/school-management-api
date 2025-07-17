@@ -50,12 +50,6 @@ abstract class Controller extends BaseController
             'data' => $data,
         ];
 
-        // If data is already an array, merge it with the response
-        if (is_array($data)) {
-            $response = array_merge($response, $data);
-            unset($response['data']);
-        }
-
         return response()->json($response, $statusCode);
     }
 
