@@ -41,7 +41,9 @@ Route::middleware(\App\Http\Middleware\DebugCorsMiddleware::class)->group(functi
         Route::get('/admin/dashboard', [DashboardController::class, 'index']);
         
         // Resource routes
-        Route::apiResource('/teachers', Teacher::class);
+        Route::apiResource('teachers', Teacher::class)->parameters([
+            'teachers' => 'teacher'  // This tells Laravel to use 'teacher' as the parameter name for model binding
+        ]);
         Route::apiResource('/students', Student::class);
         Route::apiResource('/parents', ParentController::class);
         

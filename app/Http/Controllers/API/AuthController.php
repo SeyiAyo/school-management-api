@@ -16,54 +16,6 @@ use Symfony\Component\HttpFoundation\Response;
 class AuthController extends Controller
 {
     /**
-     * Format a successful JSON response.
-     *
-     * @param mixed $data Response data
-     * @param string $message Success message
-     * @param int $statusCode HTTP status code (default: 200 OK)
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function success($data = null, string $message = 'Success', int $statusCode = Response::HTTP_OK)
-    {
-        $response = [
-            'success' => true,
-            'message' => $message,
-            'HttpStatusCode' => $statusCode,
-            'data' => $data,
-        ];
-
-        // If data is already an array, merge it with the response
-        if (is_array($data)) {
-            $response = array_merge($response, $data);
-            unset($response['data']);
-        }
-
-        return response()->json($response, $statusCode);
-    }
-
-    /**
-     * Format an error JSON response.
-     *
-     * @param string $message Error message
-     * @param int $statusCode HTTP status code (default: 400 Bad Request)
-     * @param array $errors Optional array of validation errors
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function error(string $message = 'An error occurred', int $statusCode = Response::HTTP_BAD_REQUEST, array $errors = [])
-    {
-        $response = [
-            'success' => false,
-            'message' => $message,
-            'HttpStatusCode' => $statusCode,
-        ];
-
-        if (!empty($errors)) {
-            $response['errors'] = $errors;
-        }
-
-        return response()->json($response, $statusCode);
-    }
-    /**
      * @OA\Post(
      *     path="/api/register",
      *     summary="Register new user with admin role",

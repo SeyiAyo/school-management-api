@@ -32,4 +32,65 @@ use Illuminate\Routing\Controller as BaseController;
 abstract class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+
+    /**
+     * Format a successful JSON response.
+     *
+     * @param mixed $data Response data
+     * @param string $message Success message
+     * @param int $statusCode HTTP status code (default: 200 OK)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function success($data = null, string $message = 'Success', int $statusCode = 200)
+    {
+        $response = [
+            'success' => true,
+            'message' => $message,
+            'HttpStatusCode' => $statusCode,
+            'data' => $data,
+        ];
+
+        // If data is already an array, merge it with the response
+        if (is_array($data)) {
+            $response = array_merge($response, $data);
+            unset($response['data']);
+        }
+
+        return response()->json($response, $statusCode);
+    }
+
+    /**
+     * Format an error JSON response.
+     *
+     * @param string $message Error message
+     * @param int $statusCode HTTP status code (default: 400 Bad Request)
+     * @param array $errors Optional array of validation errors
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function error(string $message, int $statusCode = 400, array $errors = [])
+    {
+        $response = [
+            'success' => false,
+            'message' => $message,
+            'HttpStatusCode' => $statusCode,
+        ];
+
+        if (!empty($errors)) {
+            $response['errors'] = $errors;
+        }
+
+        return response()->json($response, $statusCode);
+    }
+
+    /**
+     * Format an internal server error JSON response.
+     *
+     * @param string $message Error message
+     * @param array $errors Optional array of additional error details
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function internalServerError(string $message = 'Internal server error', array $errors = [])
+    {
+        return $this->error($message, 500, $errors);
+    }
 }
