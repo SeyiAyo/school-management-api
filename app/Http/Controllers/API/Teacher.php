@@ -21,7 +21,7 @@ class Teacher extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:sanctum', ['except' => ['index', 'getName']]);
+        $this->middleware('auth:sanctum', ['except' => ['index', 'getName', 'getDropdownOptions']]);
         $this->authorizeResource(TeacherModel::class, 'teacher');
     }
 
@@ -174,14 +174,16 @@ class Teacher extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'phone' => 'nullable|string|max:20',
-                'subject_specialty' => 'nullable|string|max:255',
+                'subject_specialty' => 'nullable|' . TeacherModel::getSubjectSpecialtyValidationRule(),
                 'qualification' => 'required|' . TeacherModel::getQualificationValidationRule(),
                 'date_of_birth' => 'nullable|date|before:today',
                 'address' => 'nullable|string|max:500',
                 'gender' => 'nullable|in:male,female,other',
             ], [
                 'qualification.in' => 'The selected qualification is invalid. Valid options are: ' .
-                                     implode(', ', array_values(TeacherModel::getQualifications()))
+                                     implode(', ', array_values(TeacherModel::getQualifications())),
+                'subject_specialty.in' => 'The selected subject specialty is invalid. Valid options are: ' .
+                                         implode(', ', array_values(TeacherModel::getSubjectSpecialties()))
             ]);
 
             // Generate a random password
@@ -575,6 +577,73 @@ class Teacher extends Controller
             Log::error('Failed to delete teacher: ' . $e->getMessage());
             return $this->error(
                 'Failed to delete teacher',
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/teachers/dropdown-options",
+     *     summary="Get dropdown options for teacher creation",
+     *     description="Retrieves available options for subject specialties and qualifications",
+     *     tags={"Teachers"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Dropdown options retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Dropdown options retrieved successfully"),
+     *             @OA\Property(property="HttpStatusCode", type="integer", example=200),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="subject_specialties",
+     *                     type="object",
+     *                     additionalProperties={
+     *                         "type": "string"
+     *                     },
+     *                     example={
+     *                         "Mathematics": "Mathematics",
+     *                         "English Language": "English Language",
+     *                         "Science": "Science"
+     *                     }
+     *                 ),
+     *                 @OA\Property(
+     *                     property="qualifications",
+     *                     type="object",
+     *                     additionalProperties={
+     *                         "type": "string"
+     *                     },
+     *                     example={
+     *                         "Bachelor's Degree": "Bachelor's Degree",
+     *                         "Master's Degree": "Master's Degree",
+     *                         "Doctorate (Ph.D.)": "Doctorate (Ph.D.)"
+     *                     }
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getDropdownOptions()
+    {
+        try {
+            $options = [
+                'subject_specialties' => TeacherModel::getSubjectSpecialties(),
+                'qualifications' => TeacherModel::getQualifications(),
+            ];
+
+            return $this->success(
+                $options,
+                'Dropdown options retrieved successfully'
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve dropdown options: ' . $e->getMessage());
+            return $this->error(
+                'Failed to retrieve dropdown options',
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }

@@ -60,6 +60,34 @@ class Teacher extends Model
     public const QUALIFICATION_POSTGRADUATE = 'Postgraduate Certificate/Diploma';
     public const QUALIFICATION_OTHER = 'Other';
 
+    // Subject specialties
+    public const SUBJECT_MATHEMATICS = 'Mathematics';
+    public const SUBJECT_ENGLISH = 'English Language';
+    public const SUBJECT_SCIENCE = 'Science';
+    public const SUBJECT_PHYSICS = 'Physics';
+    public const SUBJECT_CHEMISTRY = 'Chemistry';
+    public const SUBJECT_BIOLOGY = 'Biology';
+    public const SUBJECT_HISTORY = 'History';
+    public const SUBJECT_GEOGRAPHY = 'Geography';
+    public const SUBJECT_ECONOMICS = 'Economics';
+    public const SUBJECT_GOVERNMENT = 'Government';
+    public const SUBJECT_LITERATURE = 'Literature';
+    public const SUBJECT_COMPUTER_SCIENCE = 'Computer Science';
+    public const SUBJECT_ARTS = 'Arts';
+    public const SUBJECT_MUSIC = 'Music';
+    public const SUBJECT_PHYSICAL_EDUCATION = 'Physical Education';
+    public const SUBJECT_FRENCH = 'French';
+    public const SUBJECT_SPANISH = 'Spanish';
+    public const SUBJECT_GERMAN = 'German';
+    public const SUBJECT_ARABIC = 'Arabic';
+    public const SUBJECT_RELIGIOUS_STUDIES = 'Religious Studies';
+    public const SUBJECT_TECHNICAL_DRAWING = 'Technical Drawing';
+    public const SUBJECT_HOME_ECONOMICS = 'Home Economics';
+    public const SUBJECT_AGRICULTURE = 'Agriculture';
+    public const SUBJECT_BUSINESS_STUDIES = 'Business Studies';
+    public const SUBJECT_ACCOUNTING = 'Accounting';
+    public const SUBJECT_OTHER = 'Other';
+
     /**
      * Get all available qualifications
      *
@@ -77,6 +105,43 @@ class Teacher extends Model
             self::QUALIFICATION_TRADE => 'Trade School Diploma',
             self::QUALIFICATION_POSTGRADUATE => 'Postgraduate Certificate/Diploma',
             self::QUALIFICATION_OTHER => 'Other',
+        ];
+    }
+
+    /**
+     * Get all available subject specialties
+     *
+     * @return array
+     */
+    public static function getSubjectSpecialties(): array
+    {
+        return [
+            self::SUBJECT_MATHEMATICS => 'Mathematics',
+            self::SUBJECT_ENGLISH => 'English Language',
+            self::SUBJECT_SCIENCE => 'Science',
+            self::SUBJECT_PHYSICS => 'Physics',
+            self::SUBJECT_CHEMISTRY => 'Chemistry',
+            self::SUBJECT_BIOLOGY => 'Biology',
+            self::SUBJECT_HISTORY => 'History',
+            self::SUBJECT_GEOGRAPHY => 'Geography',
+            self::SUBJECT_ECONOMICS => 'Economics',
+            self::SUBJECT_GOVERNMENT => 'Government',
+            self::SUBJECT_LITERATURE => 'Literature',
+            self::SUBJECT_COMPUTER_SCIENCE => 'Computer Science',
+            self::SUBJECT_ARTS => 'Arts',
+            self::SUBJECT_MUSIC => 'Music',
+            self::SUBJECT_PHYSICAL_EDUCATION => 'Physical Education',
+            self::SUBJECT_FRENCH => 'French',
+            self::SUBJECT_SPANISH => 'Spanish',
+            self::SUBJECT_GERMAN => 'German',
+            self::SUBJECT_ARABIC => 'Arabic',
+            self::SUBJECT_RELIGIOUS_STUDIES => 'Religious Studies',
+            self::SUBJECT_TECHNICAL_DRAWING => 'Technical Drawing',
+            self::SUBJECT_HOME_ECONOMICS => 'Home Economics',
+            self::SUBJECT_AGRICULTURE => 'Agriculture',
+            self::SUBJECT_BUSINESS_STUDIES => 'Business Studies',
+            self::SUBJECT_ACCOUNTING => 'Accounting',
+            self::SUBJECT_OTHER => 'Other',
         ];
     }
 
@@ -98,6 +163,16 @@ class Teacher extends Model
     public static function getQualificationValidationRule(): string
     {
         return 'in:' . implode(',', array_keys(self::getQualifications()));
+    }
+
+    /**
+     * Get the subject specialty options for validation
+     *
+     * @return string
+     */
+    public static function getSubjectSpecialtyValidationRule(): string
+    {
+        return 'in:' . implode(',', array_keys(self::getSubjectSpecialties()));
     }
     
     /**

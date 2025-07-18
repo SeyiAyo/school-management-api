@@ -34,6 +34,7 @@ Route::middleware(\App\Http\Middleware\DebugCorsMiddleware::class)->group(functi
     // Public routes
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::get('teachers/dropdown-options', [Teacher::class, 'getDropdownOptions']);
 
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
