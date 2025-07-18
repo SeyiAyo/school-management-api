@@ -1944,6 +1944,69 @@
                     }
                 ]
             }
+        },
+        "/api/teachers/dropdown-options": {
+            "get": {
+                "tags": [
+                    "Teachers"
+                ],
+                "summary": "Get dropdown options for teacher creation",
+                "description": "Retrieves available options for subject specialties and qualifications",
+                "operationId": "a3584e132f2e207a744df07a71bf2b9a",
+                "responses": {
+                    "200": {
+                        "description": "Dropdown options retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dropdown options retrieved successfully"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "subject_specialties": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "Mathematics": "Mathematics",
+                                                        "English Language": "English Language",
+                                                        "Science": "Science"
+                                                    },
+                                                    "additionalProperties": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "qualifications": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "Bachelor's Degree": "Bachelor's Degree",
+                                                        "Master's Degree": "Master's Degree",
+                                                        "Doctorate (Ph.D.)": "Doctorate (Ph.D.)"
+                                                    },
+                                                    "additionalProperties": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
