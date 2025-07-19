@@ -173,13 +173,14 @@ class Teacher extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
-                'phone' => 'nullable|string|max:20',
+                'phone' => 'nullable|string|regex:/^[\+]?[1-9]?[0-9]{7,15}$/|max:20',
                 'subject_specialty' => 'nullable|' . TeacherModel::getSubjectSpecialtyValidationRule(),
                 'qualification' => 'required|' . TeacherModel::getQualificationValidationRule(),
                 'date_of_birth' => 'nullable|date|before:today',
                 'address' => 'nullable|string|max:500',
                 'gender' => 'nullable|in:male,female,other',
             ], [
+                'phone.regex' => 'The phone number format is invalid. Please enter a valid phone number (7-15 digits, optionally starting with + and country code).',
                 'qualification.in' => 'The selected qualification is invalid. Valid options are: ' .
                                      implode(', ', array_values(TeacherModel::getQualifications())),
                 'subject_specialty.in' => 'The selected subject specialty is invalid. Valid options are: ' .
@@ -328,7 +329,7 @@ class Teacher extends Controller
      *         "bearerAuth": {}
      *     }},
      *     @OA\Parameter(
-     *         name="id",
+     *         name="teacher",
      *         in="path",
      *         required=true,
      *         description="ID of the teacher to update",
@@ -418,14 +419,12 @@ class Teacher extends Controller
      *     )
      * )
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, TeacherModel $teacher)
     {
         try {
-            $teacher = TeacherModel::with('user')->find($id);
-
-            if (!$teacher) {
-                return $this->error('Teacher not found', Response::HTTP_NOT_FOUND);
-            }
+            // The teacher is already loaded via route model binding
+            // Just eager load the user relationship
+            $teacher->load('user');
 
             // Check if any data is provided for update
             if ($request->all() === []) {
@@ -435,15 +434,18 @@ class Teacher extends Controller
             $validated = $request->validate([
                 'name' => 'sometimes|string|max:255',
                 'email' => 'sometimes|email|unique:users,email,' . $teacher->user_id,
-                'phone' => 'nullable|string|max:20',
-                'subject_specialty' => 'nullable|string|max:255',
+                'phone' => 'nullable|string|regex:/^[\+]?[1-9]?[0-9]{7,15}$/|max:20',
+                'subject_specialty' => 'nullable|' . TeacherModel::getSubjectSpecialtyValidationRule(),
                 'qualification' => 'sometimes|' . TeacherModel::getQualificationValidationRule(),
                 'date_of_birth' => 'nullable|date|before:today',
                 'address' => 'nullable|string|max:500',
                 'gender' => 'nullable|in:male,female,other',
             ], [
+                'phone.regex' => 'The phone number format is invalid. Please enter a valid phone number (7-15 digits, optionally starting with + and country code).',
                 'qualification.in' => 'The selected qualification is invalid. Valid options are: ' .
-                                     implode(', ', array_values(TeacherModel::getQualifications()))
+                                     implode(', ', array_values(TeacherModel::getQualifications())),
+                'subject_specialty.in' => 'The selected subject specialty is invalid. Valid options are: ' .
+                                         implode(', ', array_values(TeacherModel::getSubjectSpecialties()))
             ]);
 
             DB::beginTransaction();

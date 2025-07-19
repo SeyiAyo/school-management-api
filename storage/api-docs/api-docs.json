@@ -1567,7 +1567,7 @@
                 "operationId": "e56e1d4798971811ebf91574b6f3444c",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "teacher",
                         "in": "path",
                         "description": "ID of the teacher to update",
                         "required": true,
