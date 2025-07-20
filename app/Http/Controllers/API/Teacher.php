@@ -21,7 +21,7 @@ class Teacher extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:sanctum', ['except' => ['index', 'getName', 'getDropdownOptions']]);
+        $this->middleware('auth:sanctum', ['except' => ['index', 'getDropdownOptions']]);
         $this->authorizeResource(TeacherModel::class, 'teacher');
     }
 

@@ -17,6 +17,9 @@ class DatabaseSeeder extends Seeder
             // First seed admin users
             AdminSeeder::class,
             
+            // Then seed parents (before students since students reference parents)
+            ParentSeeder::class,
+            
             // Then seed teachers and students
             TeacherSeeder::class,
             StudentSeeder::class,
