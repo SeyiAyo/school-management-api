@@ -5,6 +5,40 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @OA\Schema(
+ *     schema="Student",
+ *     type="object",
+ *     title="Student",
+ *     description="Student model",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="user_id", type="integer", example=1),
+ *     @OA\Property(property="phone", type="string", example="+1234567890"),
+ *     @OA\Property(property="date_of_birth", type="string", format="date", example="2005-01-15"),
+ *     @OA\Property(property="address", type="string", example="123 Main Street"),
+ *     @OA\Property(property="gender", type="string", enum={"male", "female", "other"}, example="male"),
+ *     @OA\Property(property="parent_id", type="integer", nullable=true, example=1),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ * 
+ * @OA\Schema(
+ *     schema="StudentWithUser",
+ *     type="object",
+ *     title="Student with User Details",
+ *     description="Student model with associated user information",
+ *     allOf={
+ *         @OA\Schema(ref="#/components/schemas/Student"),
+ *         @OA\Schema(
+ *             @OA\Property(
+ *                 property="user",
+ *                 ref="#/components/schemas/User"
+ *             )
+ *         )
+ *     }
+ * )
+ */
+
 class Student extends Model
 {
     use HasFactory;
@@ -29,7 +63,7 @@ class Student extends Model
      * @var array<int, string>
      */
     protected $hidden = [
-        'remember_token',
+        // No sensitive data to hide in student model
     ];
     
     /**
@@ -38,7 +72,7 @@ class Student extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'date_of_birth' => 'date',
     ];
     
     /**
@@ -71,5 +105,29 @@ class Student extends Model
     public function parent()
     {
         return $this->belongsTo(ParentModel::class, 'parent_id');
+    }
+
+    /**
+     * Get available gender options.
+     *
+     * @return array
+     */
+    public static function getGenders()
+    {
+        return [
+            'male' => 'Male',
+            'female' => 'Female',
+            'other' => 'Other'
+        ];
+    }
+
+    /**
+     * Get validation rule for gender field.
+     *
+     * @return string
+     */
+    public static function getGenderValidationRule()
+    {
+        return 'in:' . implode(',', array_keys(self::getGenders()));
     }
 }
