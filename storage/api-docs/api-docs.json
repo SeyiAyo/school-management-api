@@ -974,9 +974,10 @@
                     "Students"
                 ],
                 "summary": "Create a new student",
-                "description": "Creates a new student account with generated password. Only accessible by authenticated administrators.",
+                "description": "Creates a new student with the provided information and generates a random password",
                 "operationId": "502447af27809e10e3bf34001cfe2b78",
                 "requestBody": {
+                    "description": "Student data",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -988,15 +989,17 @@
                                 "properties": {
                                     "name": {
                                         "type": "string",
+                                        "maxLength": 255,
                                         "example": "John Doe"
                                     },
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "john.doe@example.com"
+                                        "example": "student@example.com"
                                     },
                                     "phone": {
                                         "type": "string",
+                                        "maxLength": 20,
                                         "example": "+1234567890"
                                     },
                                     "date_of_birth": {
@@ -1006,7 +1009,8 @@
                                     },
                                     "address": {
                                         "type": "string",
-                                        "example": "123 Main Street"
+                                        "maxLength": 500,
+                                        "example": "123 Main St, City, Country"
                                     },
                                     "gender": {
                                         "type": "string",
@@ -1018,6 +1022,7 @@
                                         "example": "male"
                                     },
                                     "parent_id": {
+                                        "description": "ID of the parent if applicable",
                                         "type": "integer",
                                         "example": 1,
                                         "nullable": true
@@ -1043,25 +1048,88 @@
                                             "type": "string",
                                             "example": "Student created successfully"
                                         },
-                                        "HttpStatusCode": {
-                                            "type": "integer",
-                                            "example": 201
-                                        },
                                         "data": {
                                             "properties": {
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "student@example.com"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
                                                 "student": {
-                                                    "$ref": "#/components/schemas/StudentWithUser"
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+1234567890"
+                                                        },
+                                                        "gender": {
+                                                            "type": "string",
+                                                            "example": "male"
+                                                        }
+                                                    },
+                                                    "type": "object"
                                                 },
                                                 "generated_password": {
                                                     "type": "string",
-                                                    "example": "abc123xyz789"
-                                                },
-                                                "login_instructions": {
-                                                    "type": "string",
-                                                    "example": "The student can log in using their email and the generated password. They should change their password after first login."
+                                                    "example": "aBcDeFgH"
                                                 }
                                             },
                                             "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Forbidden"
                                         }
                                     },
                                     "type": "object"
@@ -1081,34 +1149,26 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Validation failed"
-                                        },
-                                        "HttpStatusCode": {
-                                            "type": "integer",
-                                            "example": 422
+                                            "example": "The given data was invalid"
                                         },
                                         "errors": {
+                                            "properties": {
+                                                "email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The email has already been taken."
+                                                    }
+                                                },
+                                                "parent_id": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected parent does not exist."
+                                                    }
+                                                }
+                                            },
                                             "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthenticated"
                                         }
                                     },
                                     "type": "object"
@@ -1128,7 +1188,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "An unexpected error occurred while creating the student"
+                                            "example": "Failed to create student"
                                         }
                                     },
                                     "type": "object"

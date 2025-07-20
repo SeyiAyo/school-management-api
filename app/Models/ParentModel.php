@@ -25,6 +25,7 @@ class ParentModel extends Model
         'user_id',
         'phone',
         'address',
+        'occupation',
     ];
 
     /**
