@@ -87,4 +87,15 @@ abstract class Controller extends BaseController
     {
         return $this->error($message, 500, $errors);
     }
+
+    /**
+     * Format a 404 not found JSON response.
+     *
+     * @param string $message Error message
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function notFound(string $message = 'Resource not found')
+    {
+        return $this->error($message, 404);
+    }
 }

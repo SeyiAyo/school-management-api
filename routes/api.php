@@ -46,7 +46,9 @@ Route::middleware(\App\Http\Middleware\DebugCorsMiddleware::class)->group(functi
         Route::apiResource('teachers', Teacher::class)->parameters([
             'teachers' => 'teacher'  // This tells Laravel to use 'teacher' as the parameter name for model binding
         ]);
-        Route::apiResource('/students', Student::class);
+        Route::apiResource('/students', Student::class)->parameters([
+            'students' => 'student'
+        ]);
         Route::apiResource('/parents', ParentController::class);
         
         // Other protected routes
