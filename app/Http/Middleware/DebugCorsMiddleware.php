@@ -18,9 +18,22 @@ class DebugCorsMiddleware
     {
         $response = $next($request);
 
-        $origin = $request->headers->get('Origin', '*');
+        // Get the origin from the request
+        $origin = $request->headers->get('Origin');
 
-        $response->headers->set('Access-Control-Allow-Origin', $origin);
+        // Define allowed origins for production
+        $allowedOrigins = [
+            'https://school-crm-ayc4.vercel.app',
+        ];
+
+        // Check if origin is allowed
+        if ($origin && in_array($origin, $allowedOrigins)) {
+            $response->headers->set('Access-Control-Allow-Origin', $origin);
+        } else {
+            // Default to main frontend for production
+            $response->headers->set('Access-Control-Allow-Origin', 'https://school-crm-ayc4.vercel.app');
+        }
+
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN');
         $response->headers->set('Access-Control-Allow-Credentials', 'true');
