@@ -11,14 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      mysql:
-        image: mysql:8.0
+      postgres:
+        image: postgres:15
         env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: school_management_test
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: school_management_test
         ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
     - uses: actions/checkout@v3
@@ -27,7 +27,7 @@ jobs:
       uses: shivammathur/setup-php@v2
       with:
         php-version: '8.2'
-        extensions: mbstring, dom, fileinfo, mysql
+        extensions: mbstring, dom, fileinfo, pgsql, pdo_pgsql
         coverage: xdebug
 
     - name: Create .env file
@@ -38,11 +38,11 @@ jobs:
         echo "APP_DEBUG=true" >> .env
         echo "APP_URL=http://localhost" >> .env
         echo "LOG_CHANNEL=stack" >> .env
-        echo "DB_CONNECTION=mysql" >> .env
+        echo "DB_CONNECTION=pgsql" >> .env
         echo "DB_HOST=127.0.0.1" >> .env
-        echo "DB_PORT=3306" >> .env
+        echo "DB_PORT=5432" >> .env
         echo "DB_DATABASE=school_management_test" >> .env
-        echo "DB_USERNAME=root" >> .env
+        echo "DB_USERNAME=postgres" >> .env
         echo "DB_PASSWORD=password" >> .env
 
     - name: Update Dependencies
@@ -59,21 +59,21 @@ jobs:
         php artisan config:clear
         php artisan migrate --force
       env:
-        DB_CONNECTION: mysql
+        DB_CONNECTION: pgsql
         DB_HOST: 127.0.0.1
-        DB_PORT: 3306
+        DB_PORT: 5432
         DB_DATABASE: school_management_test
-        DB_USERNAME: root
+        DB_USERNAME: postgres
         DB_PASSWORD: password
 
     - name: Run Tests
       run: vendor/bin/phpunit
       env:
-        DB_CONNECTION: mysql
+        DB_CONNECTION: pgsql
         DB_HOST: 127.0.0.1
-        DB_PORT: 3306
+        DB_PORT: 5432
         DB_DATABASE: school_management_test
-        DB_USERNAME: root
+        DB_USERNAME: postgres
         DB_PASSWORD: password
 
   deploy:
