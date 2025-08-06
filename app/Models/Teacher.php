@@ -16,18 +16,29 @@ use OpenApi\Annotations as OA;
  *     @OA\Property(property="phone", type="string", nullable=true, example="+1234567890"),
  *     @OA\Property(property="subject_specialty", type="string", nullable=true, example="Mathematics"),
  *     @OA\Property(
- *         property="qualification", 
- *         type="string", 
+ *         property="qualification",
+ *         type="string",
  *         enum={"High School Diploma", "Associate Degree", "Bachelor's Degree", "Master's Degree", "Doctorate (Ph.D.)", "Professional Certification", "Trade School Diploma", "Postgraduate Certificate/Diploma", "Other"},
  *         example="Master's Degree"
  *     ),
- *     @OA\Property(property="date_of_birth", type="string", format="date", nullable=true, example="1990-01-01"),
- *     @OA\Property(property="address", type="string", nullable=true, example="123 Main St, City, Country"),
+ *     @OA\Property(property="date_of_birth", type="string", format="date", nullable=true, example="1990-05-15"),
+ *     @OA\Property(property="address", type="string", nullable=true, example="123 Main St, City, State"),
+ *     @OA\Property(
+ *         property="religion",
+ *         type="string",
+ *         enum={"Christian", "Muslim", "Other"},
+ *         nullable=true,
+ *         example="Christian"
+ *     ),
+ *     @OA\Property(property="salary", type="number", format="float", nullable=true, example=50000.00),
+ *     @OA\Property(property="join_date", type="string", format="date", nullable=true, example="2023-09-01"),
+ *     @OA\Property(property="picture", type="string", nullable=true, example="teachers/john_doe.jpg"),
+ *     @OA\Property(property="experience_years", type="integer", nullable=true, example=5),
  *     @OA\Property(property="gender", type="string", enum={"male", "female", "other"}, nullable=true, example="male"),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )
- * 
+ *
  * @OA\Schema(
  *     schema="TeacherWithUser",
  *     type="object",
@@ -88,6 +99,11 @@ class Teacher extends Model
     public const SUBJECT_ACCOUNTING = 'Accounting';
     public const SUBJECT_OTHER = 'Other';
 
+    // Religions
+    public const RELIGION_CHRISTIAN = 'Christian';
+    public const RELIGION_MUSLIM = 'Muslim';
+    public const RELIGION_OTHER = 'Other';
+
     /**
      * Get all available qualifications
      *
@@ -145,6 +161,15 @@ class Teacher extends Model
         ];
     }
 
+    public static function getReligions(): array
+    {
+        return [
+            self::RELIGION_CHRISTIAN => 'Christian',
+            self::RELIGION_MUSLIM => 'Muslim',
+            self::RELIGION_OTHER => 'Other',
+        ];
+    }
+
     protected $fillable = [
         'user_id',
         'phone',
@@ -153,8 +178,13 @@ class Teacher extends Model
         'date_of_birth',
         'address',
         'gender',
+        'religion',
+        'salary',
+        'join_date',
+        'picture',
+        'experience_years',
     ];
-    
+
     /**
      * Get the qualification options for validation
      *
@@ -174,7 +204,12 @@ class Teacher extends Model
     {
         return 'in:' . implode(',', array_keys(self::getSubjectSpecialties()));
     }
-    
+
+    public static function getReligionValidationRule(): string
+    {
+        return 'in:' . implode(',', array_keys(self::getReligions()));
+    }
+
     /**
      * Get the user that owns the teacher profile.
      */
@@ -182,7 +217,7 @@ class Teacher extends Model
     {
         return $this->belongsTo(User::class);
     }
-    
+
     /**
      * The attributes that should be cast.
      *
@@ -190,8 +225,11 @@ class Teacher extends Model
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'date_of_birth' => 'date',
+        'join_date' => 'date',
+        'salary' => 'decimal:2',
     ];
-    
+
     /**
      * Get the classes taught by the teacher.
      */

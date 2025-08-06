@@ -179,12 +179,24 @@ class Teacher extends Controller
                 'date_of_birth' => 'nullable|date|before:today',
                 'address' => 'nullable|string|max:500',
                 'gender' => 'nullable|in:male,female,other',
+                'religion' => 'nullable|' . TeacherModel::getReligionValidationRule(),
+                'salary' => 'nullable|numeric|min:1000|max:999999.99',
+                'join_date' => 'nullable|date|before_or_equal:today',
+                'picture' => 'nullable|string|max:255',
+                'experience_years' => 'nullable|integer|min:0|max:50',
             ], [
                 'phone.regex' => 'The phone number format is invalid. Please enter a valid phone number (7-15 digits, optionally starting with + and country code).',
-                'qualification.in' => 'The selected qualification is invalid. Valid options are: ' .
-                                     implode(', ', array_values(TeacherModel::getQualifications())),
-                'subject_specialty.in' => 'The selected subject specialty is invalid. Valid options are: ' .
-                                         implode(', ', array_values(TeacherModel::getSubjectSpecialties()))
+                'qualification.in' => 'Please select a valid qualification.',
+                'subject_specialty.in' => 'Please select a valid subject specialty.',
+                'religion.in' => 'Please select a valid religion.',
+                'salary.numeric' => 'The salary must be a valid number.',
+                'salary.min' => 'The salary must be at least 1000.',
+                'salary.max' => 'The salary cannot exceed 999,999.99.',
+                'join_date.date' => 'The join date must be a valid date.',
+                'join_date.before_or_equal' => 'The join date cannot be in the future.',
+                'experience_years.integer' => 'Experience years must be a whole number.',
+                'experience_years.min' => 'Experience years cannot be negative.',
+                'experience_years.max' => 'Experience years cannot exceed 50 years.',
             ]);
 
             // Generate a random password
@@ -440,6 +452,11 @@ class Teacher extends Controller
                 'date_of_birth' => 'nullable|date|before:today',
                 'address' => 'nullable|string|max:500',
                 'gender' => 'nullable|in:male,female,other',
+                'religion' => 'nullable|' . TeacherModel::getReligionValidationRule(),
+                'salary' => 'nullable|numeric|min:1000|max:999999.99',
+                'join_date' => 'nullable|date|before_or_equal:today',
+                'picture' => 'nullable|string|max:255',
+                'experience_years' => 'nullable|integer|min:0|max:50',
             ], [
                 'phone.regex' => 'The phone number format is invalid. Please enter a valid phone number (7-15 digits, optionally starting with + and country code).',
                 'qualification.in' => 'The selected qualification is invalid. Valid options are: ' .
