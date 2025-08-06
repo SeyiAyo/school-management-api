@@ -135,7 +135,7 @@ jobs:
           echo "APP_KEY already set"
         fi
 
-        # Set essential Laravel configs
+        # Set essential Laravel configs !
         heroku config:set APP_ENV=production --app ${{ secrets.HEROKU_APP_NAME }}
         heroku config:set LOG_CHANNEL=errorlog --app ${{ secrets.HEROKU_APP_NAME }}
 
