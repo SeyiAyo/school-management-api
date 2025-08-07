@@ -13,8 +13,9 @@ class SchoolClass extends Model
 
     protected $fillable = [
         'name',
-        'grade',
+        'description',
         'teacher_id',
+        'capacity',
     ];
 
     /**

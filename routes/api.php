@@ -36,12 +36,13 @@ Route::middleware(\App\Http\Middleware\DebugCorsMiddleware::class)->group(functi
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('teachers/dropdown-options', [Teacher::class, 'getDropdownOptions']);
     Route::get('students/dropdown-options', [Student::class, 'getDropdownOptions']);
+    Route::get('classes/dropdown-options', [SchoolClass::class, 'getDropdownOptions']);
 
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/admin/dashboard', [DashboardController::class, 'index']);
-        
+
         // Resource routes
         Route::apiResource('teachers', Teacher::class)->parameters([
             'teachers' => 'teacher'  // This tells Laravel to use 'teacher' as the parameter name for model binding
@@ -50,7 +51,11 @@ Route::middleware(\App\Http\Middleware\DebugCorsMiddleware::class)->group(functi
             'students' => 'student'
         ]);
         Route::apiResource('/parents', ParentController::class);
-        
+
+        Route::apiResource('/classes', SchoolClass::class)->parameters([
+            'classes' => 'class'
+        ]);
+
         // Other protected routes
         Route::post('/classes', [SchoolClass::class, 'store']);
         Route::post('/attendance', [Attendance::class, 'mark']);
