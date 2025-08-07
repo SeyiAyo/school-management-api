@@ -221,48 +221,48 @@ erDiagram
 ```mermaid
 graph LR
     subgraph "Public Endpoints"
-        Login[POST /api/login]
-        Register[POST /api/register]
-        TeacherDropdown[GET /api/teachers/dropdown-options]
-        StudentDropdown[GET /api/students/dropdown-options]
-        CorsTest[GET /api/test-cors]
+        Login["POST /api/login"]
+        Register["POST /api/register"]
+        TeacherDropdown["GET /api/teachers/dropdown-options"]
+        StudentDropdown["GET /api/students/dropdown-options"]
+        CorsTest["GET /api/test-cors"]
     end
     
     subgraph "Protected Endpoints"
-        Logout[POST /api/logout]
-        Dashboard[GET /api/admin/dashboard]
+        Logout["POST /api/logout"]
+        Dashboard["GET /api/admin/dashboard"]
         
         subgraph "Teacher Management"
-            TeacherIndex[GET /api/teachers]
-            TeacherStore[POST /api/teachers]
-            TeacherShow[GET /api/teachers/{teacher}]
-            TeacherUpdate[PUT/PATCH /api/teachers/{teacher}]
-            TeacherDestroy[DELETE /api/teachers/{teacher}]
+            TeacherIndex["GET /api/teachers"]
+            TeacherStore["POST /api/teachers"]
+            TeacherShow["GET /api/teachers/(id)"]
+            TeacherUpdate["PUT/PATCH /api/teachers/(id)"]
+            TeacherDestroy["DELETE /api/teachers/(id)"]
         end
         
         subgraph "Student Management"
-            StudentIndex[GET /api/students]
-            StudentStore[POST /api/students]
-            StudentShow[GET /api/students/{student}]
-            StudentUpdate[PUT/PATCH /api/students/{student}]
-            StudentDestroy[DELETE /api/students/{student}]
+            StudentIndex["GET /api/students"]
+            StudentStore["POST /api/students"]
+            StudentShow["GET /api/students/(id)"]
+            StudentUpdate["PUT/PATCH /api/students/(id)"]
+            StudentDestroy["DELETE /api/students/(id)"]
         end
         
         subgraph "Parent Management"
-            ParentIndex[GET /api/parents]
-            ParentStore[POST /api/parents]
-            ParentShow[GET /api/parents/{parent}]
-            ParentUpdate[PUT/PATCH /api/parents/{parent}]
-            ParentDestroy[DELETE /api/parents/{parent}]
+            ParentIndex["GET /api/parents"]
+            ParentStore["POST /api/parents"]
+            ParentShow["GET /api/parents/(id)"]
+            ParentUpdate["PUT/PATCH /api/parents/(id)"]
+            ParentDestroy["DELETE /api/parents/(id)"]
         end
         
         subgraph "Class & Attendance"
-            ClassStore[POST /api/classes]
-            AttendanceMark[POST /api/attendance]
+            ClassStore["POST /api/classes"]
+            AttendanceMark["POST /api/attendance"]
         end
     end
     
-    Auth[auth:sanctum middleware] --> Dashboard
+    Auth["auth:sanctum middleware"] --> Dashboard
     Auth --> TeacherIndex
     Auth --> StudentIndex
     Auth --> ParentIndex
