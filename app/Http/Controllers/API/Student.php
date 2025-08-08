@@ -67,9 +67,33 @@ class Student extends Controller
     public function index()
     {
         try {
-            $students = StudentModel::with('user')->get();
+            $students = StudentModel::with(['user', 'primaryClass'])->get();
+            
+            // Transform students to unified user objects
+            $unifiedStudents = $students->map(function ($student) {
+                return [
+                    'user' => array_merge(
+                        $student->user->only(['id', 'name', 'email']),
+                        [
+                            'student_id' => $student->id,
+                            'phone' => $student->phone,
+                            'gender' => $student->gender,
+                            'class_id' => $student->class_id,
+                            'date_of_birth' => $student->date_of_birth,
+                            'address' => $student->address,
+                            'parent_id' => $student->parent_id,
+                            'class' => $student->primaryClass ? [
+                                'id' => $student->primaryClass->id,
+                                'name' => $student->primaryClass->name,
+                                'grade' => $student->primaryClass->grade
+                            ] : null
+                        ]
+                    )
+                ];
+            });
+            
             return $this->success(
-                $students,
+                $unifiedStudents,
                 'Students retrieved successfully'
             );
         } catch (\Exception $e) {
@@ -235,15 +259,25 @@ class Student extends Controller
             // Load the student with class relationship
             $student->load('primaryClass');
 
-            return $this->success(
+            // Merge user and student data into unified user object
+            $unifiedUser = array_merge(
+                $user->only(['id', 'name', 'email']),
                 [
-                    'user' => $user->only(['id', 'name', 'email']),
-                    'student' => $student->only(['id', 'phone', 'gender', 'class_id']),
+                    'student_id' => $student->id,
+                    'phone' => $student->phone,
+                    'gender' => $student->gender,
+                    'class_id' => $student->class_id,
                     'class' => $student->primaryClass ? [
                         'id' => $student->primaryClass->id,
                         'name' => $student->primaryClass->name,
                         'grade' => $student->primaryClass->grade
-                    ] : null,
+                    ] : null
+                ]
+            );
+
+            return $this->success(
+                [
+                    'user' => $unifiedUser,
                     'generated_password' => $password
                 ],
                 'Student created successfully',
@@ -321,12 +355,30 @@ class Student extends Controller
     public function show(StudentModel $student)
     {
         try {
-            // The student is already loaded via route model binding
-            // Just eager load the user relationship
-            $student->load('user');
+            // Load relationships
+            $student->load(['user', 'primaryClass']);
+
+            // Create unified user object
+            $unifiedUser = array_merge(
+                $student->user->only(['id', 'name', 'email']),
+                [
+                    'student_id' => $student->id,
+                    'phone' => $student->phone,
+                    'gender' => $student->gender,
+                    'class_id' => $student->class_id,
+                    'date_of_birth' => $student->date_of_birth,
+                    'address' => $student->address,
+                    'parent_id' => $student->parent_id,
+                    'class' => $student->primaryClass ? [
+                        'id' => $student->primaryClass->id,
+                        'name' => $student->primaryClass->name,
+                        'grade' => $student->primaryClass->grade
+                    ] : null
+                ]
+            );
 
             return $this->success(
-                $student,
+                ['user' => $unifiedUser],
                 'Student retrieved successfully'
             );
 
@@ -453,11 +505,30 @@ class Student extends Controller
 
             DB::commit();
 
-            // Reload the student with user data
-            $student->load('user');
+            // Reload the student with relationships
+            $student->load(['user', 'primaryClass']);
+
+            // Create unified user object
+            $unifiedUser = array_merge(
+                $student->user->only(['id', 'name', 'email']),
+                [
+                    'student_id' => $student->id,
+                    'phone' => $student->phone,
+                    'gender' => $student->gender,
+                    'class_id' => $student->class_id,
+                    'date_of_birth' => $student->date_of_birth,
+                    'address' => $student->address,
+                    'parent_id' => $student->parent_id,
+                    'class' => $student->primaryClass ? [
+                        'id' => $student->primaryClass->id,
+                        'name' => $student->primaryClass->name,
+                        'grade' => $student->primaryClass->grade
+                    ] : null
+                ]
+            );
 
             return $this->success(
-                $student,
+                ['user' => $unifiedUser],
                 'Student updated successfully'
             );
 
