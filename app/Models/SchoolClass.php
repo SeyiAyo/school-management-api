@@ -13,7 +13,7 @@ class SchoolClass extends Model
 
     protected $fillable = [
         'name',
-        'description',
+        'grade',
         'teacher_id',
         'capacity',
     ];
@@ -32,5 +32,15 @@ class SchoolClass extends Model
     public function students()
     {
         return $this->belongsToMany(Student::class, 'class_student', 'class_id', 'student_id');
+    }
+
+    /**
+     * The subjects taught in this class.
+     */
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'class_subject', 'class_id', 'subject_id')
+                    ->withPivot('teacher_id')
+                    ->withTimestamps();
     }
 }

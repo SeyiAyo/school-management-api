@@ -17,7 +17,7 @@ class SchoolClass extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
+        $this->middleware('auth:sanctum')->except(['getDropdownOptions']);
     }
 
     /**
@@ -72,8 +72,8 @@ class SchoolClass extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"name","teacher_id"},
-     *             @OA\Property(property="name", type="string", example="Mathematics Grade 10"),
-     *             @OA\Property(property="description", type="string", example="Advanced mathematics for grade 10 students"),
+     *             @OA\Property(property="name", type="string", example="Grade 10A"),
+     *             @OA\Property(property="grade", type="string", example="Grade 10"),
      *             @OA\Property(property="teacher_id", type="integer", example=1),
      *             @OA\Property(property="capacity", type="integer", example=30),
      *             @OA\Property(property="students", type="array", @OA\Items(type="integer"), example={1,2,3})
@@ -97,15 +97,15 @@ class SchoolClass extends Controller
         try {
             $validatedData = $request->validate([
                 'name' => 'required|string|max:255|unique:classes,name',
-                'description' => 'nullable|string|max:1000',
-                'teacher_id' => 'required|exists:teachers,id',
+                'grade' => 'required|string|max:50',
+                'teacher_id' => 'nullable|exists:teachers,id',
                 'capacity' => 'nullable|integer|min:1|max:100',
                 'students' => 'nullable|array',
                 'students.*' => 'exists:students,id',
             ], [
                 'name.required' => 'Class name is required',
                 'name.unique' => 'A class with this name already exists',
-                'teacher_id.required' => 'Teacher assignment is required',
+                'grade.required' => 'Grade is required',
                 'teacher_id.exists' => 'Selected teacher does not exist',
                 'capacity.min' => 'Class capacity must be at least 1',
                 'capacity.max' => 'Class capacity cannot exceed 100 students',
@@ -115,7 +115,7 @@ class SchoolClass extends Controller
 
             $class = SchoolClassModel::create([
                 'name' => $validatedData['name'],
-                'description' => $validatedData['description'] ?? null,
+                'grade' => $validatedData['grade'] ?? null,
                 'teacher_id' => $validatedData['teacher_id'],
                 'capacity' => $validatedData['capacity'] ?? 30,
             ]);
@@ -196,7 +196,7 @@ class SchoolClass extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="name", type="string"),
-     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="grade", type="string"),
      *             @OA\Property(property="teacher_id", type="integer"),
      *             @OA\Property(property="capacity", type="integer"),
      *             @OA\Property(property="students", type="array", @OA\Items(type="integer"))
@@ -221,7 +221,7 @@ class SchoolClass extends Controller
         try {
             $validatedData = $request->validate([
                 'name' => 'sometimes|required|string|max:255|unique:classes,name,' . $class->id,
-                'description' => 'nullable|string|max:1000',
+                'grade' => 'nullable|string|max:50',
                 'teacher_id' => 'sometimes|required|exists:teachers,id',
                 'capacity' => 'nullable|integer|min:1|max:100',
                 'students' => 'nullable|array',
@@ -240,7 +240,7 @@ class SchoolClass extends Controller
             // Update class details
             $class->update([
                 'name' => $validatedData['name'] ?? $class->name,
-                'description' => $validatedData['description'] ?? $class->description,
+                'grade' => $validatedData['grade'] ?? $class->grade,
                 'teacher_id' => $validatedData['teacher_id'] ?? $class->teacher_id,
                 'capacity' => $validatedData['capacity'] ?? $class->capacity,
             ]);
@@ -248,13 +248,13 @@ class SchoolClass extends Controller
             // Update student enrollments if provided
             if (array_key_exists('students', $validatedData)) {
                 $students = $validatedData['students'] ?? [];
-                
+
                 // Check capacity limit
                 if ($class->capacity && count($students) > $class->capacity) {
                     DB::rollBack();
                     return $this->error('Cannot enroll more students than class capacity allows', 422);
                 }
-                
+
                 $class->students()->sync($students);
             }
 
@@ -304,7 +304,7 @@ class SchoolClass extends Controller
 
             // Detach all students from the class
             $class->students()->detach();
-            
+
             // Delete the class
             $class->delete();
 

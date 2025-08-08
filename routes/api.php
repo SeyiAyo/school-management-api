@@ -9,6 +9,7 @@ use App\Http\Controllers\API\Student;
 use App\Http\Controllers\API\Attendance;
 use App\Http\Controllers\API\SchoolClass;
 use App\Http\Controllers\API\ParentController;
+use App\Http\Controllers\API\SubjectController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +38,7 @@ Route::middleware(\App\Http\Middleware\DebugCorsMiddleware::class)->group(functi
     Route::get('teachers/dropdown-options', [Teacher::class, 'getDropdownOptions']);
     Route::get('students/dropdown-options', [Student::class, 'getDropdownOptions']);
     Route::get('classes/dropdown-options', [SchoolClass::class, 'getDropdownOptions']);
+    Route::get('subjects/dropdown-options', [SubjectController::class, 'getDropdownOptions']);
 
     // Protected routes (require authentication)
     Route::middleware('auth:sanctum')->group(function () {
@@ -51,13 +53,15 @@ Route::middleware(\App\Http\Middleware\DebugCorsMiddleware::class)->group(functi
             'students' => 'student'
         ]);
         Route::apiResource('/parents', ParentController::class);
-
         Route::apiResource('/classes', SchoolClass::class)->parameters([
             'classes' => 'class'
         ]);
+        Route::apiResource('/subjects', SubjectController::class);
+        
+        // Subject-Class assignment
+        Route::post('/subjects/{subject}/assign-to-class', [SubjectController::class, 'assignToClass']);
 
         // Other protected routes
-        Route::post('/classes', [SchoolClass::class, 'store']);
         Route::post('/attendance', [Attendance::class, 'mark']);
     });
 

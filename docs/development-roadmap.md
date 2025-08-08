@@ -8,7 +8,7 @@
 - [x] Add class capacity management and enrollment limits
 - [x] Create class-teacher assignment system
 - [ ] Implement class scheduling and timetable integration
-- [ ] Add class subject management
+- [x] Add class subject management
 
 **Estimated Time**: 1 week
 

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Response;
+use App\Models\SchoolClass;
 
 class Student extends Controller
 {
@@ -590,9 +591,29 @@ class Student extends Controller
                 $parents = [];
             }
 
+            // Get available classes
+            $classes = [];
+            try {
+                $classes = SchoolClass::with('teacher.user')
+                    ->get()
+                    ->map(function ($class) {
+                        return [
+                            'id' => $class->id,
+                            'name' => $class->name,
+                            'grade' => $class->grade,
+                            'teacher' => $class->teacher->user->name ?? 'No Teacher Assigned'
+                        ];
+                    })
+                    ->toArray();
+            } catch (\Exception $e) {
+                Log::warning('Could not load classes for dropdown: ' . $e->getMessage());
+                $classes = [];
+            }
+
             return $this->success([
                 'genders' => $genders,
-                'parents' => $parents
+                'parents' => $parents,
+                'classes' => $classes
             ], 'Dropdown options retrieved successfully');
 
         } catch (\Exception $e) {
