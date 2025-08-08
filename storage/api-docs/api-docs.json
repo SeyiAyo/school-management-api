@@ -1358,7 +1358,8 @@
                             "schema": {
                                 "required": [
                                     "name",
-                                    "email"
+                                    "email",
+                                    "class_id"
                                 ],
                                 "properties": {
                                     "name": {
@@ -1400,6 +1401,11 @@
                                         "type": "integer",
                                         "example": 1,
                                         "nullable": true
+                                    },
+                                    "class_id": {
+                                        "description": "ID of the class the student will be assigned to (required)",
+                                        "type": "integer",
+                                        "example": 1
                                     }
                                 },
                                 "type": "object"

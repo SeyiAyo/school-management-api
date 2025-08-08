@@ -94,14 +94,15 @@ class Student extends Controller
      *         required=true,
      *         description="Student data",
      *         @OA\JsonContent(
-     *             required={"name", "email"},
+     *             required={"name", "email", "class_id"},
      *             @OA\Property(property="name", type="string", maxLength=255, example="John Doe"),
      *             @OA\Property(property="email", type="string", format="email", example="student@example.com"),
      *             @OA\Property(property="phone", type="string", maxLength=20, example="+1234567890"),
      *             @OA\Property(property="date_of_birth", type="string", format="date", example="2005-01-15"),
      *             @OA\Property(property="address", type="string", maxLength=500, example="123 Main St, City, Country"),
      *             @OA\Property(property="gender", type="string", enum={"male", "female", "other"}, example="male"),
-     *             @OA\Property(property="parent_id", type="integer", nullable=true, example=1, description="ID of the parent if applicable")
+     *             @OA\Property(property="parent_id", type="integer", nullable=true, example=1, description="ID of the parent if applicable"),
+     *             @OA\Property(property="class_id", type="integer", example=1, description="ID of the class the student will be assigned to (required)")
      *         )
      *     ),
      *     @OA\Response(
@@ -170,17 +171,39 @@ class Student extends Controller
     public function store(Request $request)
     {
         try {
+            // First check if any classes exist
+            $classCount = SchoolClass::count();
+            if ($classCount === 0) {
+                return $this->error(
+                    'No classes available. Please create at least one class before adding students.',
+                    422
+                );
+            }
+
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email',
-                'phone' => 'nullable|string|regex:/^[\+]?[1-9]?[0-9]{7,15}$/|max:20',
+                'email' => 'required|string|email|max:255|unique:users',
+                'phone' => [
+                    'nullable',
+                    'string',
+                    'max:20',
+                    'regex:/^[\+]?[1-9]?[0-9]{7,15}$/'
+                ],
                 'date_of_birth' => 'nullable|date|before:today',
                 'address' => 'nullable|string|max:500',
-                'gender' => 'nullable|in:male,female,other',
+                'gender' => StudentModel::getGenderValidationRule(),
                 'parent_id' => 'nullable|exists:parents,id',
+                'class_id' => 'required|exists:classes,id',
             ], [
-                'phone.regex' => 'The phone number format is invalid. Please enter a valid phone number (7-15 digits, optionally starting with + and country code).',
-                'parent_id.exists' => 'The selected parent does not exist.'
+                'name.required' => 'Student name is required.',
+                'email.required' => 'Email address is required.',
+                'email.unique' => 'This email address is already registered.',
+                'phone.regex' => 'Please enter a valid phone number.',
+                'date_of_birth.before' => 'Date of birth must be in the past.',
+                'gender.in' => 'Please select a valid gender option.',
+                'parent_id.exists' => 'Selected parent does not exist.',
+                'class_id.required' => 'Class assignment is required for all students.',
+                'class_id.exists' => 'Selected class does not exist.',
             ]);
 
             // Generate a random password
@@ -204,14 +227,23 @@ class Student extends Controller
                 'address' => $validated['address'] ?? null,
                 'gender' => $validated['gender'] ?? null,
                 'parent_id' => $validated['parent_id'] ?? null,
+                'class_id' => $validated['class_id'],
             ]);
 
             DB::commit();
 
+            // Load the student with class relationship
+            $student->load('primaryClass');
+
             return $this->success(
                 [
                     'user' => $user->only(['id', 'name', 'email']),
-                    'student' => $student->only(['id', 'phone', 'gender']),
+                    'student' => $student->only(['id', 'phone', 'gender', 'class_id']),
+                    'class' => $student->primaryClass ? [
+                        'id' => $student->primaryClass->id,
+                        'name' => $student->primaryClass->name,
+                        'grade' => $student->primaryClass->grade
+                    ] : null,
                     'generated_password' => $password
                 ],
                 'Student created successfully',

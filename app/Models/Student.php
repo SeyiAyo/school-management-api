@@ -55,6 +55,7 @@ class Student extends Model
         'address',
         'gender',
         'parent_id',
+        'class_id',
     ];
     
     /**
@@ -105,6 +106,14 @@ class Student extends Model
     public function parent()
     {
         return $this->belongsTo(ParentModel::class, 'parent_id');
+    }
+
+    /**
+     * Get the primary class that the student belongs to.
+     */
+    public function primaryClass()
+    {
+        return $this->belongsTo(SchoolClass::class, 'class_id');
     }
 
     /**
