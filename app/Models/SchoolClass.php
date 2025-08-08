@@ -63,7 +63,7 @@ class SchoolClass extends Model
         for ($i = 1; $i <= 12; $i++) {
             $grades[] = [
                 'value' => $i,
-                'label' => (string) $i
+                'label' => "Grade {$i}"
             ];
         }
         return $grades;
