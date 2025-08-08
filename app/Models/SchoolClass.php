@@ -19,6 +19,14 @@ class SchoolClass extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'grade' => 'integer',
+        'capacity' => 'integer',
+    ];
+
+    /**
      * Get the teacher that owns the class.
      */
     public function teacher()
@@ -42,5 +50,43 @@ class SchoolClass extends Model
         return $this->belongsToMany(Subject::class, 'class_subject', 'class_id', 'subject_id')
                     ->withPivot('teacher_id')
                     ->withTimestamps();
+    }
+
+    /**
+     * Get available grade options (1-12).
+     *
+     * @return array
+     */
+    public static function getAvailableGrades()
+    {
+        $grades = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $grades[] = [
+                'value' => $i,
+                'label' => "Grade {$i}"
+            ];
+        }
+        return $grades;
+    }
+
+    /**
+     * Get validation rule for grade field.
+     *
+     * @return string
+     */
+    public static function getGradeValidationRule()
+    {
+        return 'integer|min:1|max:12';
+    }
+
+    /**
+     * Get validation rule for grade field during updates.
+     *
+     * @param int $classId
+     * @return string
+     */
+    public static function getGradeValidationRuleForUpdate($classId)
+    {
+        return 'integer|min:1|max:12';
     }
 }

@@ -71,9 +71,9 @@ class SchoolClass extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","teacher_id"},
-     *             @OA\Property(property="name", type="string", example="Grade 10A"),
-     *             @OA\Property(property="grade", type="string", example="Grade 10"),
+     *             required={"name","grade"},
+     *             @OA\Property(property="name", type="string", example="Class 10A"),
+     *             @OA\Property(property="grade", type="integer", minimum=1, maximum=12, example=10, description="Grade level (1-12), must be unique"),
      *             @OA\Property(property="teacher_id", type="integer", example=1),
      *             @OA\Property(property="capacity", type="integer", example=30),
      *             @OA\Property(property="students", type="array", @OA\Items(type="integer"), example={1,2,3})
@@ -97,7 +97,7 @@ class SchoolClass extends Controller
         try {
             $validatedData = $request->validate([
                 'name' => 'required|string|max:255|unique:classes,name',
-                'grade' => 'required|string|max:50',
+                'grade' => 'required|' . SchoolClassModel::getGradeValidationRule(),
                 'teacher_id' => 'nullable|exists:teachers,id',
                 'capacity' => 'nullable|integer|min:1|max:100',
                 'students' => 'nullable|array',
@@ -106,6 +106,9 @@ class SchoolClass extends Controller
                 'name.required' => 'Class name is required',
                 'name.unique' => 'A class with this name already exists',
                 'grade.required' => 'Grade is required',
+                'grade.integer' => 'Grade must be a number',
+                'grade.min' => 'Grade must be between 1 and 12',
+                'grade.max' => 'Grade must be between 1 and 12',
                 'teacher_id.exists' => 'Selected teacher does not exist',
                 'capacity.min' => 'Class capacity must be at least 1',
                 'capacity.max' => 'Class capacity cannot exceed 100 students',
@@ -115,8 +118,8 @@ class SchoolClass extends Controller
 
             $class = SchoolClassModel::create([
                 'name' => $validatedData['name'],
-                'grade' => $validatedData['grade'] ?? null,
-                'teacher_id' => $validatedData['teacher_id'],
+                'grade' => $validatedData['grade'],
+                'teacher_id' => $validatedData['teacher_id'] ?? null,
                 'capacity' => $validatedData['capacity'] ?? 30,
             ]);
 
@@ -196,7 +199,7 @@ class SchoolClass extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="name", type="string"),
-     *             @OA\Property(property="grade", type="string"),
+     *             @OA\Property(property="grade", type="integer", minimum=1, maximum=12, description="Grade level (1-12), must be unique"),
      *             @OA\Property(property="teacher_id", type="integer"),
      *             @OA\Property(property="capacity", type="integer"),
      *             @OA\Property(property="students", type="array", @OA\Items(type="integer"))
@@ -221,7 +224,7 @@ class SchoolClass extends Controller
         try {
             $validatedData = $request->validate([
                 'name' => 'sometimes|required|string|max:255|unique:classes,name,' . $class->id,
-                'grade' => 'nullable|string|max:50',
+                'grade' => 'nullable|' . SchoolClassModel::getGradeValidationRuleForUpdate($class->id),
                 'teacher_id' => 'sometimes|required|exists:teachers,id',
                 'capacity' => 'nullable|integer|min:1|max:100',
                 'students' => 'nullable|array',
@@ -348,6 +351,14 @@ class SchoolClass extends Controller
      *                         @OA\Property(property="id", type="integer"),
      *                         @OA\Property(property="name", type="string")
      *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="grades",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="value", type="integer"),
+     *                         @OA\Property(property="label", type="string")
+     *                     )
      *                 )
      *             )
      *         )
@@ -377,9 +388,13 @@ class SchoolClass extends Controller
                     ];
                 });
 
+            // Get all available grades (1-12)
+            $availableGrades = SchoolClassModel::getAvailableGrades();
+
             $data = [
                 'teachers' => $teachers,
                 'students' => $students,
+                'grades' => $availableGrades,
             ];
 
             return $this->success($data, 'Dropdown options retrieved successfully');
