@@ -832,6 +832,78 @@
             }
         },
         "/api/classes": {
+            "get": {
+                "tags": [
+                    "Classes"
+                ],
+                "summary": "Get all classes",
+                "operationId": "4a6d67909e262c9ad78e82bf15d36d20",
+                "responses": {
+                    "200": {
+                        "description": "Classes retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Classes retrieved successfully"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "teacher_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "capacity": {
+                                                        "type": "integer"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Classes"
@@ -845,17 +917,168 @@
                             "schema": {
                                 "required": [
                                     "name",
-                                    "grade",
                                     "teacher_id"
                                 ],
                                 "properties": {
                                     "name": {
+                                        "type": "string",
+                                        "example": "Mathematics Grade 10"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Advanced mathematics for grade 10 students"
+                                    },
+                                    "teacher_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "capacity": {
+                                        "type": "integer",
+                                        "example": 30
+                                    },
+                                    "students": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Class created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Class created successfully"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 201
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/classes/{class}": {
+            "get": {
+                "tags": [
+                    "Classes"
+                ],
+                "summary": "Get a specific class",
+                "operationId": "f745c7062655a9fb310dd9c9d604b836",
+                "parameters": [
+                    {
+                        "name": "class",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Class retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Class retrieved successfully"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Class not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Classes"
+                ],
+                "summary": "Update a class",
+                "operationId": "6208360dc1562dc5de7195f94bdcc432",
+                "parameters": [
+                    {
+                        "name": "class",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
                                         "type": "string"
                                     },
-                                    "grade": {
+                                    "description": {
                                         "type": "string"
                                     },
                                     "teacher_id": {
+                                        "type": "integer"
+                                    },
+                                    "capacity": {
                                         "type": "integer"
                                     },
                                     "students": {
@@ -871,14 +1094,165 @@
                     }
                 },
                 "responses": {
-                    "201": {
-                        "description": "Class created successfully"
+                    "200": {
+                        "description": "Class updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Class updated successfully"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "422": {
                         "description": "Validation error"
                     },
+                    "404": {
+                        "description": "Class not found"
+                    },
                     "401": {
                         "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Classes"
+                ],
+                "summary": "Delete a class",
+                "operationId": "14e8af5dd16cc7060dcfc58d2041f8c4",
+                "parameters": [
+                    {
+                        "name": "class",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Class deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Class deleted successfully"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Class not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/classes/dropdown-options": {
+            "get": {
+                "tags": [
+                    "Classes"
+                ],
+                "summary": "Get dropdown options for class forms",
+                "operationId": "ae3d51fdac25390cce23ef1ee34088bb",
+                "responses": {
+                    "200": {
+                        "description": "Dropdown options retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dropdown options retrieved successfully"
+                                        },
+                                        "HttpStatusCode": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "teachers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "students": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -2733,12 +3107,44 @@
                     "date_of_birth": {
                         "type": "string",
                         "format": "date",
-                        "example": "1990-01-01",
+                        "example": "1990-05-15",
                         "nullable": true
                     },
                     "address": {
                         "type": "string",
-                        "example": "123 Main St, City, Country",
+                        "example": "123 Main St, City, State",
+                        "nullable": true
+                    },
+                    "religion": {
+                        "type": "string",
+                        "enum": [
+                            "Christian",
+                            "Muslim",
+                            "Other"
+                        ],
+                        "example": "Christian",
+                        "nullable": true
+                    },
+                    "salary": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50000,
+                        "nullable": true
+                    },
+                    "join_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2023-09-01",
+                        "nullable": true
+                    },
+                    "picture": {
+                        "type": "string",
+                        "example": "teachers/john_doe.jpg",
+                        "nullable": true
+                    },
+                    "experience_years": {
+                        "type": "integer",
+                        "example": 5,
                         "nullable": true
                     },
                     "gender": {
