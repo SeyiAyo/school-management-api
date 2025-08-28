@@ -18,29 +18,31 @@ class AuthController extends Controller
     /**
      * @OA\Post(
      *     path="/api/register",
-     *     summary="Register new user with admin role",
+     *     summary="Register school administrator (email verification required)",
      *     tags={"Authentication"},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","email","password","password_confirmation"},
-     *             @OA\Property(property="name", type="string", example="John Doe", maxLength=255),
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com", maxLength=255),
+     *             required={"first_name","last_name","email","password","password_confirmation","position"},
+     *             @OA\Property(property="first_name", type="string", example="John", maxLength=100),
+     *             @OA\Property(property="last_name", type="string", example="Doe", maxLength=100),
+     *             @OA\Property(property="email", type="string", format="email", example="admin@school.com", maxLength=255),
      *             @OA\Property(property="password", type="string", format="password", example="password123", minLength=8),
-     *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123", description="Must match the password field")
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123", description="Must match the password field"),
+     *             @OA\Property(property="phone", type="string", example="+2348012345678", maxLength=20),
+     *             @OA\Property(property="position", type="string", example="Principal", maxLength=100)
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="User registered successfully",
+     *         description="Administrator registered; verification email sent",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="User registered successfully"),
+     *             @OA\Property(property="message", type="string", example="Registration successful. Please verify your email."),
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="user", type="object"),
      *                 @OA\Property(property="role", type="string", example="admin"),
-     *                 @OA\Property(property="access_token", type="string", example="1|abcdef123456"),
-     *                 @OA\Property(property="token_type", type="string", example="Bearer")
+     *                 @OA\Property(property="requires_email_verification", type="boolean", example=true)
      *             )
      *         )
      *     ),
@@ -74,28 +76,33 @@ class AuthController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
+                'first_name' => 'required|string|max:100',
+                'last_name' => 'required|string|max:100',
+                'email' => 'required|string|email|max:255|unique:users,email',
                 'password' => 'required|string|min:8|confirmed',
+                'phone' => 'nullable|string|max:20',
+                'position' => 'required|string|max:100',  //position at school
             ]);
+
+            $fullName = trim($validated['first_name'] . ' ' . $validated['last_name']);
 
             // Create user with admin role
             $user = User::create([
-                'name' => $validated['name'],
+                'name' => $fullName,
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role' => 'admin',
             ]);
 
-            // Create token with admin ability
-            $token = $user->createToken('auth_token', ['role:admin'])->plainTextToken;
+            // Send email verification notification
+            $user->sendEmailVerificationNotification();
 
+            // Do not issue access token until email is verified
             return $this->success([
                     'user' => $user,
                     'role' => 'admin',
-                    'access_token' => $token,
-                    'token_type' => 'Bearer',
-            ], 'User registered successfully', Response::HTTP_CREATED);
+                    'requires_email_verification' => true,
+            ], 'Registration successful. Please verify your email.', Response::HTTP_CREATED);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->error(

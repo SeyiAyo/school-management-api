@@ -10,6 +10,8 @@ use App\Http\Controllers\API\Attendance;
 use App\Http\Controllers\API\SchoolClass;
 use App\Http\Controllers\API\ParentController;
 use App\Http\Controllers\API\SubjectController;
+use App\Http\Controllers\API\EmailVerificationController;
+use App\Http\Controllers\API\OnboardingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,6 +46,15 @@ Route::middleware(\App\Http\Middleware\DebugCorsMiddleware::class)->group(functi
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+
+        // Resend email verification for authenticated user
+        Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
+            ->middleware('throttle:6,1');
+
+        // Onboarding routes (email must be verified; controller enforces)
+        Route::post('/onboarding/school-profile/step-1', [OnboardingController::class, 'step1']);
+        Route::post('/onboarding/school-profile/step-2', [OnboardingController::class, 'step2']);
+        Route::post('/onboarding/school-profile/complete', [OnboardingController::class, 'complete']);
 
         // Resource routes
         Route::apiResource('teachers', Teacher::class)->parameters([
