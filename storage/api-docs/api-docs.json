@@ -14,6 +14,124 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/admin/schools/pending-verification": {
+            "get": {
+                "tags": [
+                    "Admin Verification"
+                ],
+                "summary": "Get schools pending verification",
+                "description": "Get all schools pending verification",
+                "operationId": "979fbf8a8234a1ab2369493d1332301e",
+                "responses": {
+                    "200": {
+                        "description": "Schools pending verification",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/schools/{school}/verify": {
+            "post": {
+                "tags": [
+                    "Admin Verification"
+                ],
+                "summary": "Approve or reject school verification",
+                "description": "Approve or reject school verification",
+                "operationId": "d8617601043d7a0cbc1b616f355d5d86",
+                "parameters": [
+                    {
+                        "name": "school",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "action"
+                                ],
+                                "properties": {
+                                    "action": {
+                                        "type": "string",
+                                        "enum": [
+                                            "approve",
+                                            "reject"
+                                        ]
+                                    },
+                                    "notes": {
+                                        "description": "Optional verification notes",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "School verification updated"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/verification/stats": {
+            "get": {
+                "tags": [
+                    "Admin Verification"
+                ],
+                "summary": "Get verification statistics",
+                "description": "Get verification statistics",
+                "operationId": "858e9974be245aff941408b616e86ded",
+                "responses": {
+                    "200": {
+                        "description": "Verification statistics"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/attendance": {
             "post": {
                 "tags": [
@@ -169,6 +287,11 @@
                                                 "requires_email_verification": {
                                                     "type": "boolean",
                                                     "example": true
+                                                },
+                                                "verification_token": {
+                                                    "description": "Temporary token for email verification",
+                                                    "type": "string",
+                                                    "example": "1|abcdef123456"
                                                 }
                                             },
                                             "type": "object"
@@ -368,8 +491,41 @@
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
-                                                        "example": "The provided credentials are incorrect."
+                                                        "example": "Invalid credentials"
                                                     }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Email not verified",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Please verify your email address before logging in. Check your inbox for the verification link."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "requires_email_verification": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "admin@school.com"
                                                 }
                                             },
                                             "type": "object"
@@ -674,6 +830,140 @@
                 ]
             }
         },
+        "/api/email/verify-otp": {
+            "post": {
+                "tags": [
+                    "Email Verification"
+                ],
+                "summary": "Verify email with OTP code",
+                "description": "Verify email using OTP code",
+                "operationId": "5c9e2eb1686665ce73b794fd90c49549",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "otp_code"
+                                ],
+                                "properties": {
+                                    "otp_code": {
+                                        "description": "6-digit verification code",
+                                        "type": "string",
+                                        "example": "123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email verified successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Email verified successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or expired OTP",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid verification code."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/email/verification-notification": {
+            "post": {
+                "tags": [
+                    "Email Verification"
+                ],
+                "summary": "Resend OTP verification code",
+                "description": "Resend OTP verification code to the authenticated user",
+                "operationId": "979888f9dcb1d2c0d556b57747b6976d",
+                "responses": {
+                    "200": {
+                        "description": "Verification code sent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Verification code sent."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Too many verification attempts."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/onboarding/status": {
             "get": {
                 "tags": [
@@ -848,15 +1138,87 @@
                 "tags": [
                     "Onboarding"
                 ],
-                "summary": "Onboarding Step 3: Complete onboarding",
-                "description": "Step 3: Complete onboarding",
+                "summary": "Onboarding Step 3: Submit for verification",
+                "description": "Step 3: Submit for verification",
                 "operationId": "2512c3293dc0240cdd6e435ec1466058",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "accept_verification_terms"
+                                ],
+                                "properties": {
+                                    "accept_verification_terms": {
+                                        "description": "User must accept that we will contact school for verification",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Onboarding complete"
+                        "description": "Submitted for verification"
                     },
                     "403": {
                         "description": "Email not verified or not admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/onboarding/verification-status": {
+            "get": {
+                "tags": [
+                    "Onboarding"
+                ],
+                "summary": "Check verification status",
+                "description": "Step 4: Verification pending status",
+                "operationId": "9932544ba11389f397db86442692ee02",
+                "responses": {
+                    "200": {
+                        "description": "Verification status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "pending"
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "submitted_at": {
+                                                    "type": "string",
+                                                    "format": "datetime"
+                                                },
+                                                "disclaimer": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -3975,6 +4337,10 @@
     },
     "tags": [
         {
+            "name": "Admin Verification",
+            "description": "Admin Verification"
+        },
+        {
             "name": "Attendance",
             "description": "Attendance"
         },
@@ -3985,6 +4351,10 @@
         {
             "name": "Dashboard",
             "description": "Dashboard"
+        },
+        {
+            "name": "Email Verification",
+            "description": "Email Verification"
         },
         {
             "name": "Onboarding",

@@ -43,7 +43,8 @@ class AuthController extends Controller
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="user", type="object"),
      *                 @OA\Property(property="role", type="string", example="admin"),
-     *                 @OA\Property(property="requires_email_verification", type="boolean", example=true)
+     *                 @OA\Property(property="requires_email_verification", type="boolean", example=true),
+     *                 @OA\Property(property="verification_token", type="string", example="1|abcdef123456", description="Temporary token for email verification")
      *             )
      *         )
      *     ),
@@ -98,11 +99,14 @@ class AuthController extends Controller
             // Send email verification notification
             $user->sendEmailVerificationNotification();
 
-            // Do not issue access token until email is verified
+            // Issue temporary verification token for OTP verification
+            $tempToken = $user->createToken('email-verification', ['email-verification'])->plainTextToken;
+
             return $this->success([
                     'user' => $user,
                     'role' => 'admin',
                     'requires_email_verification' => true,
+                    'verification_token' => $tempToken,
             ], 'Registration successful. Please verify your email.', Response::HTTP_CREATED);
 
         } catch (\Illuminate\Validation\ValidationException $e) {

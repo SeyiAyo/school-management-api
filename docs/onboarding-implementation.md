@@ -4,9 +4,22 @@ This document defines the step-by-step plan to change registration to onboard a 
 
 ## Objectives
 - Register a school owner/principal as the initial administrator only.
-- Enforce email verification before system access.
+- Enforce email verification before system access using OTP codes.
 - Complete a guided 3-step onboarding to create the School profile.
 - Provide Swagger documentation for all endpoints.
+
+## ✅ **IMPLEMENTATION STATUS: COMPLETED**
+
+### **Email Verification System**
+- ✅ **OTP-Based Verification**: 6-digit codes with 5-minute expiry
+- ✅ **Temporary Token System**: Secure verification tokens for OTP endpoints
+- ✅ **Gmail SMTP Integration**: Local development email delivery
+- ✅ **Synchronous Email Sending**: No queue dependency required
+
+### **Authentication Flow**
+1. **Registration** → Issues temporary verification token + sends OTP email
+2. **OTP Verification** → Uses temporary token, marks email verified, revokes token
+3. **Login** → Full access token after email verification
 
 ---
 
@@ -141,14 +154,28 @@ Swagger: Document all three endpoints with request bodies, validation, responses
 
 ---
 
-## 8) Email Verification Flow (API)
+## 8) Email Verification Flow (API) - **UPDATED FOR OTP SYSTEM**
 
-- On registration, send verification link via email.
-- Frontend should:
-  - After register, show “verify your email” screen
-  - Poll or link to verification URL
-  - Provide a button to resend verification: `POST /api/email/verification-notification`
-- Only after `email_verified_at` is set should onboarding endpoints be allowed.
+### **New OTP-Based Flow**
+1. **Registration** → Returns `verification_token` + sends OTP email
+2. **OTP Verification** → `POST /api/email/verify-otp` with temporary token
+3. **Resend OTP** → `POST /api/email/verification-notification` with temporary token
+
+### **API Endpoints**
+- `POST /api/email/verify-otp` (requires temporary token)
+  - Headers: `Authorization: Bearer {verification_token}`
+  - Body: `{"otp_code": "123456"}`
+  
+- `POST /api/email/verification-notification` (requires temporary token)
+  - Headers: `Authorization: Bearer {verification_token}`
+  - Body: `{}` (empty)
+
+### **Frontend Integration**
+- After registration, store `verification_token` from response
+- Show OTP input screen with 6-digit code field
+- Use temporary token for verification requests
+- After successful verification, redirect to login (token is revoked)
+- Provide resend button using temporary token
 
 ---
 

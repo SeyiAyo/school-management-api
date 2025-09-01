@@ -64,6 +64,11 @@ class EmailVerificationController extends Controller
 
         $user = $request->user();
 
+        // Verify user has email-verification token ability
+        if (!$user->tokenCan('email-verification')) {
+            return $this->error('Invalid verification token. Please use the token provided during registration.', Response::HTTP_FORBIDDEN);
+        }
+
         if ($user->hasVerifiedEmail()) {
             return $this->success(null, 'Email already verified.');
         }
@@ -85,7 +90,10 @@ class EmailVerificationController extends Controller
         $user->markEmailAsVerified();
         event(new Verified($user));
 
-        return $this->success(null, 'Email verified successfully.');
+        // Revoke the temporary verification token
+        $user->currentAccessToken()->delete();
+
+        return $this->success(null, 'Email verified successfully. Please login with your credentials.');
     }
 
     /**
@@ -117,6 +125,11 @@ class EmailVerificationController extends Controller
     public function resend(Request $request)
     {
         $user = $request->user();
+
+        // Verify user has email-verification token ability
+        if (!$user->tokenCan('email-verification')) {
+            return $this->error('Invalid verification token. Please use the token provided during registration.', Response::HTTP_FORBIDDEN);
+        }
 
         if ($user->hasVerifiedEmail()) {
             return $this->success(null, 'Email already verified.');
