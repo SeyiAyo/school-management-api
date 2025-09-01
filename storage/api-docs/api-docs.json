@@ -82,7 +82,7 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Register new user with admin role",
+                "summary": "Register school administrator (email verification required)",
                 "operationId": "a718f172ff3ac464d723835815f8fb57",
                 "requestBody": {
                     "required": true,
@@ -90,22 +90,29 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "name",
+                                    "first_name",
+                                    "last_name",
                                     "email",
                                     "password",
-                                    "password_confirmation"
+                                    "password_confirmation",
+                                    "position"
                                 ],
                                 "properties": {
-                                    "name": {
+                                    "first_name": {
                                         "type": "string",
-                                        "maxLength": 255,
-                                        "example": "John Doe"
+                                        "maxLength": 100,
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Doe"
                                     },
                                     "email": {
                                         "type": "string",
                                         "format": "email",
                                         "maxLength": 255,
-                                        "example": "user@example.com"
+                                        "example": "admin@school.com"
                                     },
                                     "password": {
                                         "type": "string",
@@ -118,6 +125,16 @@
                                         "type": "string",
                                         "format": "password",
                                         "example": "password123"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "maxLength": 20,
+                                        "example": "+2348012345678"
+                                    },
+                                    "position": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Principal"
                                     }
                                 },
                                 "type": "object"
@@ -127,7 +144,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "User registered successfully",
+                        "description": "Administrator registered; verification email sent",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -138,7 +155,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "User registered successfully"
+                                            "example": "Registration successful. Please verify your email."
                                         },
                                         "data": {
                                             "properties": {
@@ -149,13 +166,9 @@
                                                     "type": "string",
                                                     "example": "admin"
                                                 },
-                                                "access_token": {
-                                                    "type": "string",
-                                                    "example": "1|abcdef123456"
-                                                },
-                                                "token_type": {
-                                                    "type": "string",
-                                                    "example": "Bearer"
+                                                "requires_email_verification": {
+                                                    "type": "boolean",
+                                                    "example": true
                                                 }
                                             },
                                             "type": "object"
@@ -299,6 +312,32 @@
                                                 "token_type": {
                                                     "type": "string",
                                                     "example": "Bearer"
+                                                },
+                                                "onboarding_status": {
+                                                    "description": "Onboarding status for admin users only",
+                                                    "properties": {
+                                                        "current_step": {
+                                                            "type": "integer",
+                                                            "example": 2,
+                                                            "nullable": true
+                                                        },
+                                                        "completed_steps": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "is_complete": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "requires_onboarding": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
                                                 }
                                             },
                                             "type": "object"
@@ -635,6 +674,198 @@
                 ]
             }
         },
+        "/api/onboarding/status": {
+            "get": {
+                "tags": [
+                    "Onboarding"
+                ],
+                "summary": "Get current onboarding status",
+                "description": "Get current onboarding status for the authenticated admin",
+                "operationId": "65727296351505541702706c7bdb136e",
+                "responses": {
+                    "200": {
+                        "description": "Onboarding status retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_step": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "completed_steps": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "is_complete": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "school": {
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/onboarding/school-profile/step-1": {
+            "post": {
+                "tags": [
+                    "Onboarding"
+                ],
+                "summary": "Onboarding Step 1: Create/Update school identity",
+                "description": "Step 1: Core school identity",
+                "operationId": "3924dc52afa3163cca0d1dcf305ea828",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Bright Academy"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "Primary"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Our mission..."
+                                    },
+                                    "logo": {
+                                        "description": "School logo image file",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "School saved"
+                    },
+                    "403": {
+                        "description": "Email not verified or not admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/onboarding/school-profile/step-2": {
+            "post": {
+                "tags": [
+                    "Onboarding"
+                ],
+                "summary": "Onboarding Step 2: Contact info",
+                "description": "Step 2: Contact and presence info",
+                "operationId": "ca1faabc54c9bcf57e661ff77adc401c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "nullable": true
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "website": {
+                                        "type": "string",
+                                        "format": "uri",
+                                        "nullable": true
+                                    },
+                                    "accept_terms": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contact info saved"
+                    },
+                    "403": {
+                        "description": "Email not verified or not admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/onboarding/school-profile/complete": {
+            "post": {
+                "tags": [
+                    "Onboarding"
+                ],
+                "summary": "Onboarding Step 3: Complete onboarding",
+                "description": "Step 3: Complete onboarding",
+                "operationId": "2512c3293dc0240cdd6e435ec1466058",
+                "responses": {
+                    "200": {
+                        "description": "Onboarding complete"
+                    },
+                    "403": {
+                        "description": "Email not verified or not admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/parents": {
             "get": {
                 "tags": [
@@ -917,16 +1148,19 @@
                             "schema": {
                                 "required": [
                                     "name",
-                                    "teacher_id"
+                                    "grade"
                                 ],
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "Grade 10A"
+                                        "example": "Class 10A"
                                     },
                                     "grade": {
-                                        "type": "string",
-                                        "example": "Grade 10"
+                                        "description": "Grade level (1-12), must be unique",
+                                        "type": "integer",
+                                        "maximum": 12,
+                                        "minimum": 1,
+                                        "example": 10
                                     },
                                     "teacher_id": {
                                         "type": "integer",
@@ -1073,7 +1307,10 @@
                                         "type": "string"
                                     },
                                     "grade": {
-                                        "type": "string"
+                                        "description": "Grade level (1-12), must be unique",
+                                        "type": "integer",
+                                        "maximum": 12,
+                                        "minimum": 1
                                     },
                                     "teacher_id": {
                                         "type": "integer"
@@ -1239,6 +1476,20 @@
                                                                 "type": "integer"
                                                             },
                                                             "name": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "grades": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "value": {
+                                                                "type": "integer"
+                                                            },
+                                                            "label": {
                                                                 "type": "string"
                                                             }
                                                         },
@@ -3734,6 +3985,10 @@
         {
             "name": "Dashboard",
             "description": "Dashboard"
+        },
+        {
+            "name": "Onboarding",
+            "description": "Onboarding"
         },
         {
             "name": "Parents",
