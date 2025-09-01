@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\CustomVerifyEmail;
 use Laravel\Sanctum\HasApiTokens;
 use OpenApi\Annotations as OA;
 
@@ -93,5 +94,15 @@ class User extends Authenticatable implements MustVerifyEmail
     public function parent()
     {
         return $this->hasOne(ParentModel::class);
+    }
+
+    /**
+     * Send the email verification notification using ResendEmailService.
+     *
+     * @return void
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new CustomVerifyEmail);
     }
 }

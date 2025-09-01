@@ -25,7 +25,6 @@ class ParentModel extends Model
         'user_id',
         'phone',
         'address',
-        'occupation',
     ];
 
     /**
@@ -41,6 +40,6 @@ class ParentModel extends Model
      */
     public function students()
     {
-        return $this->hasMany(Student::class, 'parent_id');
+        return $this->hasMany(Student::class);
     }
 }

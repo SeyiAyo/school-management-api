@@ -48,7 +48,9 @@ Route::middleware(\App\Http\Middleware\DebugCorsMiddleware::class)->group(functi
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/admin/dashboard', [DashboardController::class, 'index']);
 
-        // Resend email verification for authenticated user
+        // OTP email verification routes
+        Route::post('/email/verify-otp', [EmailVerificationController::class, 'verifyOtp'])
+            ->middleware('throttle:10,1');
         Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
             ->middleware('throttle:6,1');
 
