@@ -24,8 +24,13 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->json('academic_levels')->nullable();
             $table->string('calendar_structure')->nullable();
-            $table->string('status')->default('pending'); // pending|active|suspended
+            $table->string('status')->default('pending'); // pending, active, verified, rejected, suspended
+            $table->unsignedBigInteger('verified_by')->nullable();
+            $table->timestamp('verified_at')->nullable();
+            $table->text('verification_notes')->nullable();
             $table->timestamps();
+
+            $table->foreign('verified_by')->references('id')->on('users')->onDelete('set null');
 
             $table->index(['status']);
         });

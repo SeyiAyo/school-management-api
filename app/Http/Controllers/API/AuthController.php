@@ -150,7 +150,14 @@ class AuthController extends Controller
      *                 ),
      *                 @OA\Property(property="role", type="string", example="teacher"),
      *                 @OA\Property(property="access_token", type="string", example="1|abcdef123456"),
-     *                 @OA\Property(property="token_type", type="string", example="Bearer")
+     *                 @OA\Property(property="token_type", type="string", example="Bearer"),
+     *                 @OA\Property(property="onboarding_status", type="object", nullable=true,
+     *                     description="Onboarding status for admin users only",
+     *                     @OA\Property(property="current_step", type="integer", nullable=true, example=2),
+     *                     @OA\Property(property="completed_steps", type="array", @OA\Items(type="integer")),
+     *                     @OA\Property(property="is_complete", type="boolean", example=false),
+     *                     @OA\Property(property="requires_onboarding", type="boolean", example=true)
+     *                 )
      *             )
      *         )
      *     ),
@@ -229,12 +236,57 @@ class AuthController extends Controller
                     break;
             }
 
+            // Check onboarding status for admins
+            $onboardingStatus = null;
+            if ($user->role === 'admin') {
+                $school = \App\Models\School::where('owner_user_id', $user->id)->first();
+                
+                $currentStep = 1;
+                $completedSteps = [];
+                $isComplete = false;
+
+                if ($school) {
+                    // Step 1: Basic school info
+                    if ($school->name && $school->type) {
+                        $completedSteps[] = 1;
+                        $currentStep = 2;
+                    }
+
+                    // Step 2: Contact info and terms
+                    if (in_array(1, $completedSteps) && ($school->email || $school->phone || $school->address)) {
+                        $completedSteps[] = 2;
+                        $currentStep = 3;
+                    }
+
+                    // Step 3: Submit for verification
+                    if (in_array(2, $completedSteps) && $school->status === 'active') {
+                        $completedSteps[] = 3;
+                        $currentStep = 4;
+                    }
+
+                    // Step 4: Verification complete
+                    if (in_array(3, $completedSteps) && $school->status === 'verified') {
+                        $completedSteps[] = 4;
+                        $currentStep = null;
+                        $isComplete = true;
+                    }
+                }
+
+                $onboardingStatus = [
+                    'current_step' => $currentStep,
+                    'completed_steps' => $completedSteps,
+                    'is_complete' => $isComplete,
+                    'requires_onboarding' => !$isComplete,
+                ];
+            }
+
             return $this->success([
                     'user' => $user,
                     'profile' => $profile,
                     'role' => $user->role,
                     'access_token' => $token,
                     'token_type' => 'Bearer',
+                    'onboarding_status' => $onboardingStatus,
             ], 'Login successful');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
