@@ -8,9 +8,10 @@ use App\Models\Teacher;
 use App\Models\ParentModel;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
@@ -168,9 +169,19 @@ class AuthController extends Controller
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Invalid credentials"),
      *             @OA\Property(property="errors", type="object",
-     *                 @OA\Property(property="email", type="array",
-     *                     @OA\Items(type="string", example="The provided credentials are incorrect.")
-     *                 )
+     *                 @OA\Property(property="email", type="array", @OA\Items(type="string", example="Invalid credentials"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Email not verified",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Please verify your email address before logging in. Check your inbox for the verification link."),
+     *             @OA\Property(property="errors", type="object",
+     *                 @OA\Property(property="requires_email_verification", type="boolean", example=true),
+     *                 @OA\Property(property="email", type="string", example="admin@school.com")
      *             )
      *         )
      *     ),
@@ -208,15 +219,19 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
 
-            // Find user in the central users table
-            $user = User::where('email', $credentials['email'])->first();
+            if (! Auth::attempt($credentials)) {
+                return $this->error('Invalid credentials', Response::HTTP_UNAUTHORIZED);
+            }
 
-            if (!$user || !Hash::check($credentials['password'], $user->password)) {
-                return $this->error(
-                    'Invalid credentials',
-                    Response::HTTP_UNAUTHORIZED,
-                    ['email' => ['The provided credentials are incorrect.']]
-                );
+            $user = Auth::user();
+
+            // Check if email is verified for admin users
+            if ($user->role === 'admin' && !$user->hasVerifiedEmail()) {
+                Auth::logout();
+                return $this->error('Please verify your email address before logging in. Check your inbox for the verification link.', Response::HTTP_FORBIDDEN, [
+                    'requires_email_verification' => true,
+                    'email' => $user->email
+                ]);
             }
 
             // Create token with role-specific ability
