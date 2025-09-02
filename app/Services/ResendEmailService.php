@@ -10,6 +10,12 @@ use Resend\Laravel\Facades\Resend;
 
 class ResendEmailService
 {
+    protected EmailTemplateService $templateService;
+
+    public function __construct(EmailTemplateService $templateService)
+    {
+        $this->templateService = $templateService;
+    }
 
     /**
      * Send email using environment-based dispatch
@@ -259,8 +265,11 @@ class ResendEmailService
     public function sendEmailVerification(string $to, string $otpCode, string $userName): array|false
     {
         try {
-            $subject = 'Your Email Verification Code - School Management System';
-            $html = $this->getOtpEmailTemplate($otpCode, $userName);
+            $subject = 'Your Email Verification Code - EduSphere';
+            $html = $this->templateService->renderTemplate('otp-verification', [
+                'otpCode' => $otpCode,
+                'userName' => $userName
+            ]);
             $fromAddress = config('mail.from.address');
 
             Log::info('Attempting to send OTP email verification', [
@@ -312,97 +321,18 @@ class ResendEmailService
             ? "School Verification Approved - {$schoolName}"
             : "School Verification Update - {$schoolName}";
 
-        $html = $this->getSchoolVerificationTemplate($schoolName, $status, $notes);
+        $html = $this->templateService->renderTemplate('school-verification', [
+            'schoolName' => $schoolName,
+            'isApproved' => $status === 'approved',
+            'message' => $status === 'approved'
+                ? 'Your school has been successfully verified and you now have full access to all features.'
+                : 'Your school verification requires additional review. Please check the details below.',
+            'notes' => $notes
+        ]);
 
         return $this->sendEmail($to, $subject, $html, config('mail.from.address'));
     }
 
-
-    /**
-     * Generate HTML template for OTP email verification
-     *
-     * @param string $otpCode 6-digit verification code
-     * @param string $userName User's display name
-     * @return string HTML email template
-     */
-    private function getOtpEmailTemplate(string $otpCode, string $userName): string
-    {
-        return "
-        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
-            <div style='background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;'>
-                <h1 style='color: #2c3e50; margin-bottom: 20px;'>Email Verification Code</h1>
-                <p style='color: #555; font-size: 16px; margin-bottom: 30px;'>
-                    Hello {$userName},<br><br>
-                    Thank you for registering with our School Management System.
-                    Please use the verification code below to complete your registration.
-                </p>
-                <div style='background-color: #3498db; color: white; padding: 20px; border-radius: 8px; 
-                           font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 30px 0;'>
-                    {$otpCode}
-                </div>
-                <p style='color: #e74c3c; font-size: 14px; font-weight: bold; margin-bottom: 20px;'>
-                    This code expires in 5 minutes
-                </p>
-                <p style='color: #777; font-size: 14px;'>
-                    If you didn't create an account, you can safely ignore this email.
-                </p>
-                <p style='color: #777; font-size: 12px; margin-top: 30px;'>
-                    For security reasons, never share this code with anyone.
-                </p>
-            </div>
-        </div>";
-    }
-
-    /**
-     * Generate HTML template for school verification status email
-     *
-     * @param string $schoolName Name of the school
-     * @param string $status Verification status (approved/rejected)
-     * @param string|null $notes Optional admin notes
-     * @return string HTML email template
-     */
-    private function getSchoolVerificationTemplate(string $schoolName, string $status, ?string $notes = null): string
-    {
-        $statusColor = $status === 'approved' ? '#27ae60' : '#e74c3c';
-        $statusText = $status === 'approved' ? 'Approved' : 'Requires Attention';
-        $message = $status === 'approved'
-            ? 'Congratulations! Your school has been successfully verified and you now have full access to the system.'
-            : 'Your school verification requires additional information or corrections.';
-
-        $notesSection = $notes ? "
-            <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                <h3 style='color: #2c3e50; margin-bottom: 10px;'>Additional Notes:</h3>
-                <p style='color: #555; margin: 0;'>{$notes}</p>
-            </div>
-        " : '';
-
-        return "
-        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
-            <div style='background-color: #f8f9fa; padding: 30px; border-radius: 10px;'>
-                <h1 style='color: {$statusColor}; text-align: center; margin-bottom: 20px;'>
-                    School Verification {$statusText}
-                </h1>
-                <p style='color: #555; font-size: 16px; margin-bottom: 20px;'>
-                    Hello,<br><br>
-                    We have an update regarding the verification status of <strong>{$schoolName}</strong>.
-                </p>
-                <p style='color: #555; font-size: 16px; margin-bottom: 20px;'>
-                    {$message}
-                </p>
-                {$notesSection}
-                <div style='text-align: center; margin-top: 30px;'>
-                    <a href='" . config('app.frontend_url', 'http://localhost:3000') . "/dashboard'
-                       style='background-color: #3498db; color: white; padding: 15px 30px; text-decoration: none;
-                              border-radius: 5px; font-weight: bold; display: inline-block;'>
-                        Access Dashboard
-                    </a>
-                </div>
-                <p style='color: #777; font-size: 14px; text-align: center; margin-top: 20px;'>
-                    If you have any questions, please contact our support team.
-                </p>
-            </div>
-        </div>";
-    }
 
     /**
      * Retrieve email information by ID

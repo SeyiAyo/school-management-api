@@ -6,7 +6,6 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Notifications\CustomVerifyEmail;
 use Laravel\Sanctum\HasApiTokens;
 use OpenApi\Annotations as OA;
 
@@ -103,6 +102,36 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function sendEmailVerificationNotification()
     {
-        $this->notify(new CustomVerifyEmail);
+        try {
+            // Generate OTP for email verification
+            $otpService = app(\App\Services\OtpService::class);
+            $otp = $otpService->generateOtp($this, $this->getEmailForVerification());
+            
+            // Use ResendEmailService to send the OTP email
+            $resendService = app(\App\Services\ResendEmailService::class);
+            
+            $result = $resendService->sendEmailVerification(
+                $this->getEmailForVerification(),
+                $otp->otp_code,
+                $this->name
+            );
+
+            if ($result === false) {
+                throw new \Exception('Failed to send OTP email verification');
+            }
+
+            \Illuminate\Support\Facades\Log::info('Email verification sent successfully', [
+                'user_id' => $this->id,
+                'email' => $this->getEmailForVerification()
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send email verification', [
+                'user_id' => $this->id,
+                'email' => $this->getEmailForVerification(),
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 }
