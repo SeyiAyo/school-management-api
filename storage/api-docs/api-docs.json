@@ -250,8 +250,20 @@
                                         "example": "+2348012345678"
                                     },
                                     "position": {
+                                        "description": "School administrator position (accepts various formats: 'Principal', 'vice principal', 'Vice_Principal', etc.)",
                                         "type": "string",
-                                        "maxLength": 100,
+                                        "enum": [
+                                            "Principal",
+                                            "Owner",
+                                            "Director",
+                                            "Headmaster",
+                                            "Headmistress",
+                                            "Administrator",
+                                            "Vice Principal",
+                                            "Deputy Head",
+                                            "Academic Director",
+                                            "School Manager"
+                                        ],
                                         "example": "Principal"
                                     }
                                 },
@@ -330,6 +342,13 @@
                                                     "items": {
                                                         "type": "string",
                                                         "example": "The password confirmation does not match."
+                                                    }
+                                                },
+                                                "position": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The selected position is invalid."
                                                     }
                                                 }
                                             },
@@ -673,6 +692,59 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/admin-positions": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get valid administrator positions",
+                "description": "Get valid administrator positions for dropdown",
+                "operationId": "f88bdea79b98368358daa5b2521a84d6",
+                "responses": {
+                    "200": {
+                        "description": "Valid administrator positions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Administrator positions retrieved"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "positions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "value": {
+                                                                "type": "string",
+                                                                "example": "principal"
+                                                            },
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "Principal"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/admin/dashboard": {

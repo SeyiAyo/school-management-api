@@ -17,6 +17,46 @@ use Symfony\Component\HttpFoundation\Response;
 class AuthController extends Controller
 {
     /**
+     * Get valid school administrator positions (internal format)
+     *
+     * @return array
+     */
+    public static function getValidPositions(): array
+    {
+        return [
+            'principal',
+            'owner',
+            'director',
+            'headmaster',
+            'headmistress',
+            'administrator',
+            'vice principal',
+            'deputy head',
+            'academic director',
+            'school manager'
+        ];
+    }
+
+    /**
+     * Get valid positions with both formats for validation
+     *
+     * @return array
+     */
+    public static function getAllValidPositionFormats(): array
+    {
+        $positions = self::getValidPositions();
+        $allFormats = [];
+        
+        foreach ($positions as $position) {
+            $allFormats[] = $position; // Original format
+            $allFormats[] = str_replace(' ', '_', $position); // Underscore format
+            $allFormats[] = ucwords($position); // Title case
+            $allFormats[] = ucwords(str_replace(' ', '_', $position)); // Title case with underscores
+        }
+        
+        return array_unique($allFormats);
+    }
+    /**
      * @OA\Post(
      *     path="/api/register",
      *     summary="Register school administrator (email verification required)",
@@ -31,7 +71,13 @@ class AuthController extends Controller
      *             @OA\Property(property="password", type="string", format="password", example="password123", minLength=8),
      *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123", description="Must match the password field"),
      *             @OA\Property(property="phone", type="string", example="+2348012345678", maxLength=20),
-     *             @OA\Property(property="position", type="string", example="Principal", maxLength=100)
+     *             @OA\Property(
+     *                 property="position", 
+     *                 type="string", 
+     *                 enum={"Principal", "Owner", "Director", "Headmaster", "Headmistress", "Administrator", "Vice Principal", "Deputy Head", "Academic Director", "School Manager"},
+     *                 example="Principal",
+     *                 description="School administrator position (accepts various formats: 'Principal', 'vice principal', 'Vice_Principal', etc.)"
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -60,6 +106,9 @@ class AuthController extends Controller
      *                 ),
      *                 @OA\Property(property="password", type="array",
      *                     @OA\Items(type="string", example="The password confirmation does not match.")
+     *                 ),
+     *                 @OA\Property(property="position", type="array",
+     *                     @OA\Items(type="string", example="The selected position is invalid.")
      *                 )
      *             )
      *         )
@@ -83,7 +132,7 @@ class AuthController extends Controller
                 'email' => 'required|string|email|max:255|unique:users,email',
                 'password' => 'required|string|min:8|confirmed',
                 'phone' => 'nullable|string|max:20',
-                'position' => 'required|string|max:100',  //position at school
+                'position' => 'required|string|in:' . implode(',', self::getAllValidPositionFormats()),
             ]);
 
             $fullName = trim($validated['first_name'] . ' ' . $validated['last_name']);
@@ -259,7 +308,7 @@ class AuthController extends Controller
             $onboardingStatus = null;
             if ($user->role === 'admin') {
                 $school = \App\Models\School::where('owner_user_id', $user->id)->first();
-                
+
                 $currentStep = 1;
                 $completedSteps = [];
                 $isComplete = false;
@@ -380,5 +429,44 @@ class AuthController extends Controller
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
+    }
+
+    /**
+     * Get valid administrator positions for dropdown
+     *
+     * @OA\Get(
+     *     path="/api/admin-positions",
+     *     summary="Get valid administrator positions",
+     *     tags={"Authentication"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Valid administrator positions",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Administrator positions retrieved"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="positions", type="array", 
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="value", type="string", example="principal"),
+     *                         @OA\Property(property="label", type="string", example="Principal")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getAdminPositions()
+    {
+        $positions = collect(self::getValidPositions())->map(function ($position) {
+            return [
+                'value' => ucwords($position), // Clean format for frontend
+                'label' => ucwords($position)  // Same as value, user-friendly
+            ];
+        });
+
+        return $this->success([
+            'positions' => $positions
+        ], 'Administrator positions retrieved');
     }
 }
