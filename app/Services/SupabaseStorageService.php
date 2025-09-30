@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class SupabaseStorageService
 {
@@ -17,6 +17,18 @@ class SupabaseStorageService
         $this->supabaseUrl = env('SUPABASE_URL');
         $this->serviceKey = env('SUPABASE_ACCESS_KEY_ID');
         $this->bucket = env('SUPABASE_BUCKET', 'school-images');
+    }
+
+    /**
+     * Check if Supabase is properly configured
+     *
+     * @return bool
+     */
+    protected function isConfigured(): bool
+    {
+        return !empty($this->supabaseUrl) && 
+               !empty($this->serviceKey) && 
+               !empty($this->bucket);
     }
 
     /**
@@ -76,12 +88,20 @@ class SupabaseStorageService
      * @param int $expiresIn Expiration time for signed URLs
      * @return string|null The URL or null if failed
      */
-    public function getFileUrl($filePath, $useSignedUrl = false, $expiresIn = 3600)
+    public function getFileUrl($filePath, $useSignedUrl = true, $expiresIn = 86400)
     {
         if (!$filePath) {
             return null;
         }
 
+        if (!$this->isConfigured()) {
+            Log::warning('Attempting to get file URL but Supabase not configured', [
+                'file_path' => $filePath
+            ]);
+            return null;
+        }
+
+        // For private buckets, always use signed URLs (default 24 hours)
         if ($useSignedUrl) {
             return $this->generateSignedUrl($filePath, $expiresIn);
         }
@@ -99,9 +119,64 @@ class SupabaseStorageService
     public function storeFile($file, $folder = '')
     {
         try {
-            return $file->store($folder, 'supabase');
+            if (!$this->isConfigured()) {
+                Log::error('Supabase storage not configured', [
+                    'has_url' => !empty($this->supabaseUrl),
+                    'has_key' => !empty($this->serviceKey),
+                    'has_bucket' => !empty($this->bucket)
+                ]);
+                return false;
+            }
+
+            Log::info('Attempting to store file to Supabase via REST API', [
+                'folder' => $folder,
+                'filename' => $file->getClientOriginalName(),
+                'supabase_url' => $this->supabaseUrl,
+                'bucket' => $this->bucket
+            ]);
+
+            // Generate unique filename
+            $filename = $folder ? $folder . '/' . uniqid() . '_' . $file->getClientOriginalName() : uniqid() . '_' . $file->getClientOriginalName();
+            
+            // Upload using Supabase REST API
+            $httpClient = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->serviceKey,
+                'Content-Type' => $file->getMimeType(),
+            ]);
+            
+            // Disable SSL verification in development (XAMPP/Windows fix)
+            if (env('APP_ENV') !== 'production') {
+                $httpClient = $httpClient->withOptions(['verify' => false]);
+            }
+            
+            $response = $httpClient->attach(
+                'file',
+                file_get_contents($file->getRealPath()),
+                $file->getClientOriginalName()
+            )->post("{$this->supabaseUrl}/storage/v1/object/{$this->bucket}/{$filename}");
+
+            if (!$response->successful()) {
+                Log::error('Supabase upload failed', [
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                    'filename' => $filename
+                ]);
+                return false;
+            }
+            
+            Log::info('File stored successfully via REST API', [
+                'path' => $filename,
+                'folder' => $folder
+            ]);
+            
+            return $filename;
         } catch (\Exception $e) {
-            Log::error('Error storing file to Supabase: ' . $e->getMessage());
+            Log::error('Error storing file to Supabase: ' . $e->getMessage(), [
+                'folder' => $folder,
+                'filename' => $file->getClientOriginalName(),
+                'exception_class' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
     }
@@ -115,13 +190,30 @@ class SupabaseStorageService
     public function deleteFile($filePath)
     {
         try {
-            if (Storage::disk('supabase')->exists($filePath)) {
-                return Storage::disk('supabase')->delete($filePath);
+            if (!$this->isConfigured()) {
+                Log::warning('Attempting to delete file but Supabase not configured', [
+                    'file_path' => $filePath
+                ]);
+                return false;
             }
+
+            if (Storage::disk('supabase')->exists($filePath)) {
+                $result = Storage::disk('supabase')->delete($filePath);
+                Log::info('File deleted from Supabase', [
+                    'file_path' => $filePath,
+                    'success' => $result
+                ]);
+                return $result;
+            }
+            
+            Log::info('File does not exist in Supabase, skipping deletion', [
+                'file_path' => $filePath
+            ]);
             return true; // File doesn't exist, consider it deleted
         } catch (\Exception $e) {
             Log::error('Error deleting file from Supabase: ' . $e->getMessage(), [
-                'file_path' => $filePath
+                'file_path' => $filePath,
+                'trace' => $e->getTraceAsString()
             ]);
             return false;
         }

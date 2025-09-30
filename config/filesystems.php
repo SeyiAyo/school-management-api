@@ -67,8 +67,11 @@ return [
             'region' => env('SUPABASE_DEFAULT_REGION', 'ap-south-1'),
             'bucket' => env('SUPABASE_BUCKET'),
             'endpoint' => env('SUPABASE_ENDPOINT'),
-            'use_path_style_endpoint' => true,
-            'throw' => false,
+            'use_path_style_endpoint' => true, // Must be true for Supabase
+            'throw' => true, // Enable exceptions for debugging
+            'http' => [
+                'verify' => env('APP_ENV') === 'production', // Disable SSL verification in development (XAMPP/Windows fix)
+            ],
         ],
 
     ],

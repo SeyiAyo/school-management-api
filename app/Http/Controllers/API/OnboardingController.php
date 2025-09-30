@@ -10,6 +10,7 @@ use App\Services\SupabaseStorageService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
 class OnboardingController extends Controller
@@ -107,7 +108,22 @@ class OnboardingController extends Controller
         // Add logo URL if exists
         $schoolData = $school ? $school->toArray() : null;
         if ($school && $school->logo_path) {
-            $schoolData['logo_url'] = $this->storageService->getFileUrl($school->logo_path);
+            try {
+                $useSupabase = env('SUPABASE_URL') && env('SUPABASE_ACCESS_KEY_ID');
+                
+                if ($useSupabase) {
+                    $schoolData['logo_url'] = $this->storageService->getFileUrl($school->logo_path);
+                } else {
+                    // Generate local storage URL
+                    $schoolData['logo_url'] = asset('storage/' . $school->logo_path);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to generate logo URL', [
+                    'path' => $school->logo_path,
+                    'error' => $e->getMessage()
+                ]);
+                $schoolData['logo_url'] = null;
+            }
         }
 
         return $this->success([
@@ -149,12 +165,20 @@ class OnboardingController extends Controller
             return $resp;
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|string|max:100', // school type: (e.g. primary, secondary, college etc.)
-            'description' => 'nullable|string|max:1000',
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg|max:2048', // 2MB max
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'type' => 'required|string|max:100', // school type: (e.g. primary, secondary, college etc.)
+                'description' => 'nullable|string|max:1000',
+                'logo' => 'nullable|image|mimes:png,jpg,jpeg|max:2048', // 2MB max
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->error(
+                'Validation failed',
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                $e->errors()
+            );
+        }
 
         try {
             return DB::transaction(function () use ($validated, $request) {
@@ -167,16 +191,49 @@ class OnboardingController extends Controller
                     'description' => $validated['description'] ?? $school->description,
                 ]);
 
-                // Handle logo upload to Supabase
+                // Handle logo upload
                 if ($request->hasFile('logo')) {
-                    // Delete old logo if exists
-                    if ($school->logo_path) {
-                        $this->storageService->deleteFile($school->logo_path);
-                    }
+                    // Check if Supabase is configured
+                    $useSupabase = env('SUPABASE_URL') && env('SUPABASE_ACCESS_KEY_ID');
+                    
+                    if ($useSupabase) {
+                        // Use Supabase storage (production)
+                        Log::info('Using Supabase storage for logo upload');
+                        
+                        // Delete old logo if exists
+                        if ($school->logo_path) {
+                            $deleteResult = $this->storageService->deleteFile($school->logo_path);
+                            if (!$deleteResult) {
+                                Log::warning('Failed to delete old logo', ['path' => $school->logo_path]);
+                            }
+                        }
 
-                    // Store new logo in Supabase
-                    $logoPath = $this->storageService->storeFile($request->file('logo'), 'logos');
-                    if ($logoPath) {
+                        // Store new logo in Supabase
+                        $logoPath = $this->storageService->storeFile($request->file('logo'), 'school-logos');
+                        if (!$logoPath) {
+                            Log::error('Failed to upload logo to Supabase');
+                            throw new \Exception('Failed to upload logo. Please try again or contact administrator.');
+                        }
+                        
+                        $school->logo_path = $logoPath;
+                    } else {
+                        // Fallback to local storage (development)
+                        Log::info('Using local storage for logo upload (Supabase not configured)');
+                        
+                        // Delete old logo if exists
+                        if ($school->logo_path && Storage::disk('public')->exists($school->logo_path)) {
+                            Storage::disk('public')->delete($school->logo_path);
+                            Log::info('Deleted old logo from local storage', ['path' => $school->logo_path]);
+                        }
+
+                        // Store new logo locally
+                        $logoPath = $request->file('logo')->store('school-logos', 'public');
+                        if (!$logoPath) {
+                            Log::error('Failed to upload logo to local storage');
+                            throw new \Exception('Failed to upload logo. Please try again.');
+                        }
+                        
+                        Log::info('Logo uploaded to local storage', ['path' => $logoPath]);
                         $school->logo_path = $logoPath;
                     }
                 }
@@ -189,14 +246,41 @@ class OnboardingController extends Controller
                 // Add URL for logo if exists
                 $schoolData = $school->toArray();
                 if ($school->logo_path) {
-                    $schoolData['logo_url'] = $this->storageService->getFileUrl($school->logo_path);
+                    try {
+                        // Check if using Supabase or local storage
+                        $useSupabase = env('SUPABASE_URL') && env('SUPABASE_ACCESS_KEY_ID');
+                        
+                        if ($useSupabase) {
+                            $schoolData['logo_url'] = $this->storageService->getFileUrl($school->logo_path);
+                        } else {
+                            // Generate local storage URL
+                            $schoolData['logo_url'] = asset('storage/' . $school->logo_path);
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to generate logo URL', [
+                            'path' => $school->logo_path,
+                            'error' => $e->getMessage()
+                        ]);
+                        $schoolData['logo_url'] = null;
+                    }
                 }
 
                 return $this->success($schoolData, 'School identity saved');
             });
         } catch (\Exception $e) {
-            Log::error('Onboarding step1 error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return $this->internalServerError('Failed to save school identity');
+            Log::error('Onboarding step1 error: '.$e->getMessage(), [
+                'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Return specific error message if available
+            $errorMessage = str_contains($e->getMessage(), 'storage') || 
+                           str_contains($e->getMessage(), 'upload') ||
+                           str_contains($e->getMessage(), 'configured')
+                ? $e->getMessage()
+                : 'Failed to save school identity. Please try again.';
+            
+            return $this->error($errorMessage, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
