@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Role;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -21,7 +22,7 @@ use OpenApi\Annotations as OA;
  *     @OA\Property(
  *         property="role", 
  *         type="string", 
- *         enum={"admin", "teacher", "student", "parent"},
+ *         enum={"super_admin", "admin", "teacher", "student", "parent"},
  *         example="teacher"
  *     ),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
@@ -66,6 +67,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => Role::class,
         ];
     }
     
@@ -93,6 +95,37 @@ class User extends Authenticatable implements MustVerifyEmail
     public function parent()
     {
         return $this->hasOne(ParentModel::class);
+    }
+
+    /**
+     * Check if user has admin role (admin or super_admin)
+     *
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role->isAdmin();
+    }
+
+    /**
+     * Check if user has super admin role
+     *
+     * @return bool
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role->isSuperAdmin();
+    }
+
+    /**
+     * Check if user has specific role
+     *
+     * @param Role $role
+     * @return bool
+     */
+    public function hasRole(Role $role): bool
+    {
+        return $this->role === $role;
     }
 
     /**

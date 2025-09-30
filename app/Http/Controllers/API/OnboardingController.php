@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\School;
 use Illuminate\Http\Request;
@@ -33,7 +34,7 @@ class OnboardingController extends Controller
         if (! $user->hasVerifiedEmail()) {
             return $this->error('Email not verified. Please verify to continue onboarding.', Response::HTTP_FORBIDDEN);
         }
-        if ($user->role !== 'admin') {
+        if (!$user->hasRole(Role::ADMIN)) {
             return $this->error('Only administrators can perform onboarding.', Response::HTTP_FORBIDDEN);
         }
         return null; // OK

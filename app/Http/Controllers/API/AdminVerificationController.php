@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\User;
@@ -40,7 +41,7 @@ class AdminVerificationController extends Controller
     {
         // Only super admins can verify schools
         $user = Auth::user();
-        if ($user->role !== 'super_admin') {
+        if (!$user->isSuperAdmin()) {
             return $this->error('Unauthorized. Only super admins can verify schools.', Response::HTTP_FORBIDDEN);
         }
 
@@ -115,7 +116,7 @@ class AdminVerificationController extends Controller
     {
         // Only super admins can verify schools
         $user = Auth::user();
-        if ($user->role !== 'super_admin') {
+        if (!$user->isSuperAdmin()) {
             return $this->error('Unauthorized. Only super admins can verify schools.', Response::HTTP_FORBIDDEN);
         }
 
@@ -197,7 +198,7 @@ class AdminVerificationController extends Controller
     public function getVerificationStats(Request $request)
     {
         $user = Auth::user();
-        if ($user->role !== 'super_admin') {
+        if (!$user->isSuperAdmin()) {
             return $this->error('Unauthorized. Only super admins can view verification stats.', Response::HTTP_FORBIDDEN);
         }
 

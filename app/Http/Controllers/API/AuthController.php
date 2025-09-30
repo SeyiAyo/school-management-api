@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\Student;
 use App\Models\Teacher;
@@ -142,7 +143,7 @@ class AuthController extends Controller
                 'name' => $fullName,
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'role' => 'admin',
+                'role' => Role::ADMIN,
             ]);
 
             // Send email verification notification
@@ -279,7 +280,7 @@ class AuthController extends Controller
             $user = Auth::user();
 
             // Check if email is verified for admin users
-            if ($user->role === 'admin' && !$user->hasVerifiedEmail()) {
+            if ($user->hasRole(Role::ADMIN) && !$user->hasVerifiedEmail()) {
                 Auth::logout();
                 return $this->error('Please verify your email address before logging in. Check your inbox for the verification link.', Response::HTTP_FORBIDDEN, [
                     'requires_email_verification' => true,
@@ -288,25 +289,25 @@ class AuthController extends Controller
             }
 
             // Create token with role-specific ability
-            $token = $user->createToken('auth_token', ['role:' . $user->role])->plainTextToken;
+            $token = $user->createToken('auth_token', ['role:' . $user->role->value])->plainTextToken;
 
             // Get the profile data based on role
             $profile = null;
             switch ($user->role) {
-                case 'student':
+                case Role::STUDENT:
                     $profile = Student::where('user_id', $user->id)->first();
                     break;
-                case 'teacher':
+                case Role::TEACHER:
                     $profile = Teacher::where('user_id', $user->id)->first();
                     break;
-                case 'parent':
+                case Role::PARENT:
                     $profile = ParentModel::where('user_id', $user->id)->first();
                     break;
             }
 
             // Check onboarding status for admins
             $onboardingStatus = null;
-            if ($user->role === 'admin') {
+            if ($user->hasRole(Role::ADMIN)) {
                 $school = \App\Models\School::where('owner_user_id', $user->id)->first();
 
                 $currentStep = 1;
@@ -351,7 +352,7 @@ class AuthController extends Controller
             return $this->success([
                     'user' => $user,
                     'profile' => $profile,
-                    'role' => $user->role,
+                    'role' => $user->role->value,
                     'access_token' => $token,
                     'token_type' => 'Bearer',
                     'onboarding_status' => $onboardingStatus,
@@ -468,5 +469,37 @@ class AuthController extends Controller
         return $this->success([
             'positions' => $positions
         ], 'Administrator positions retrieved');
+    }
+
+    /**
+     * Get all available user roles
+     *
+     * @OA\Get(
+     *     path="/api/roles",
+     *     summary="Get all available user roles",
+     *     tags={"Authentication"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Available user roles",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="User roles retrieved"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="roles", type="array", 
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="value", type="string", example="admin"),
+     *                         @OA\Property(property="label", type="string", example="Administrator")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getRoles()
+    {
+        return $this->success([
+            'roles' => Role::options()
+        ], 'User roles retrieved');
     }
 }
