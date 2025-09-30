@@ -41,20 +41,36 @@ class SupabaseStorageService
     public function generateSignedUrl($filePath, $expiresIn = 3600)
     {
         try {
-            $response = Http::withHeaders([
+            Log::info('Generating signed URL', [
+                'file_path' => $filePath,
+                'bucket' => $this->bucket,
+                'url' => $this->supabaseUrl
+            ]);
+            
+            $httpClient = Http::withHeaders([
                 'Authorization' => "Bearer {$this->serviceKey}",
                 'Content-Type' => 'application/json'
-            ])->post("{$this->supabaseUrl}/storage/v1/object/sign/{$this->bucket}/{$filePath}", [
+            ]);
+            
+            // Disable SSL verification in development (XAMPP/Windows fix)
+            if (env('APP_ENV') !== 'production') {
+                $httpClient = $httpClient->withOptions(['verify' => false]);
+            }
+            
+            $response = $httpClient->post("{$this->supabaseUrl}/storage/v1/object/sign/{$this->bucket}/{$filePath}", [
                 'expiresIn' => $expiresIn
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                return $this->supabaseUrl . $data['signedURL'];
+                $signedUrl = $this->supabaseUrl . $data['signedURL'];
+                Log::info('Signed URL generated successfully');
+                return $signedUrl;
             }
 
             Log::warning('Failed to generate Supabase signed URL', [
                 'file_path' => $filePath,
+                'status' => $response->status(),
                 'response' => $response->body()
             ]);
 

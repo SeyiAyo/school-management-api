@@ -285,25 +285,40 @@ class OnboardingController extends Controller
     }
 
     /**
-     * Step 2: Contact and presence info
+     * Step 2: Contact info + Terms Acceptance
      *
      * @OA\Post(
      *     path="/api/onboarding/school-profile/step-2",
-     *     summary="Onboarding Step 2: Contact info",
+     *     summary="Onboarding Step 2: Contact info + Terms Acceptance",
      *     tags={"Onboarding"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="email", type="string", format="email", nullable=true),
-     *             @OA\Property(property="phone", type="string", nullable=true),
-     *             @OA\Property(property="address", type="string", nullable=true),
-     *             @OA\Property(property="website", type="string", format="uri", nullable=true),
-     *             @OA\Property(property="accept_terms", type="boolean", example=true)
+     *             required={"email", "phone", "address", "accept_terms"},
+     *             @OA\Property(property="email", type="string", format="email", example="school@example.com"),
+     *             @OA\Property(property="phone", type="string", example="+1234567890"),
+     *             @OA\Property(property="address", type="string", example="123 School St, City, State"),
+     *             @OA\Property(property="website", type="string", format="uri", nullable=true, example="https://school.edu"),
+     *             @OA\Property(property="accept_terms", type="boolean", example=true, description="Must accept terms acknowledging school verification contact")
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Contact info saved"),
-     *     @OA\Response(response=403, description="Email not verified or not admin")
+     *     @OA\Response(
+     *         response=200,
+     *         description="Contact info saved with disclaimer",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="School contact info saved"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="school", type="object"),
+     *                 @OA\Property(property="message", type="string"),
+     *                 @OA\Property(property="disclaimer", type="string"),
+     *                 @OA\Property(property="next_step", type="string", example="complete")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Email not verified or not admin"),
+     *     @OA\Response(response=422, description="Terms not accepted")
      * )
      */
     public function step2(Request $request)
@@ -351,23 +366,14 @@ class OnboardingController extends Controller
     }
 
     /**
-     * Step 3: Submit for verification
+     * Step 3: Final confirmation screen - Complete onboarding
      *
      * @OA\Post(
      *     path="/api/onboarding/school-profile/complete",
-     *     summary="Onboarding Step 3: Submit for verification",
+     *     summary="Onboarding Step 3: Complete onboarding (no action required)",
      *     tags={"Onboarding"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"accept_verification_terms"},
-     *             @OA\Property(property="accept_verification_terms", type="boolean", example=true,
-     *                 description="User must accept that we will contact school for verification"
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Submitted for verification"),
+     *     @OA\Response(response=200, description="Onboarding complete - awaiting verification"),
      *     @OA\Response(response=403, description="Email not verified or not admin")
      * )
      */
@@ -375,14 +381,6 @@ class OnboardingController extends Controller
     {
         if ($resp = $this->ensureVerifiedAdmin()) {
             return $resp;
-        }
-
-        $validated = $request->validate([
-            'accept_verification_terms' => 'required|boolean',
-        ]);
-
-        if (! $validated['accept_verification_terms']) {
-            return $this->error('You must accept the verification terms to proceed.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         try {
@@ -393,19 +391,20 @@ class OnboardingController extends Controller
                     return $this->error('School profile not found. Complete previous steps first.', Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
 
-                $school->status = 'active'; // Submitted for verification
+                // Mark school as active (onboarding complete, awaiting verification)
+                $school->status = 'active';
                 $school->save();
 
                 return $this->success([
                     'school' => $school,
                     'verification_status' => 'pending',
-                    'message' => 'Your school information has been submitted for verification. We will contact your school to authenticate the details provided.',
-                    'next_step' => 'verification_pending'
-                ], 'Information submitted for verification.');
+                    'message' => 'Onboarding complete! Your school information has been submitted for verification. Verification may take up to 3-5 business days. You will receive a confirmation email when your account is approved.',
+                    'estimated_verification_time' => '3-5 business days'
+                ], 'Onboarding complete. Awaiting verification.');
             });
         } catch (\Exception $e) {
             Log::error('Onboarding complete error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return $this->internalServerError('Failed to submit for verification');
+            return $this->internalServerError('Failed to complete onboarding');
         }
     }
 
@@ -446,21 +445,21 @@ class OnboardingController extends Controller
         }
 
         $status = 'pending';
-        $message = 'Your school verification is in progress.';
-        
+        $message = 'Your school verification is in progress. Verification may take up to 3-5 business days. You will receive a confirmation email when your account is approved.';
+
         if ($school->status === 'verified') {
             $status = 'verified';
             $message = 'Your school has been verified! You can now access all features.';
         } elseif ($school->status === 'rejected') {
             $status = 'rejected';
-            $message = 'Your school verification was not successful. Please contact support.';
+            $message = 'Your school verification was not successful. Please contact support for more information.';
         }
 
         return $this->success([
             'status' => $status,
             'message' => $message,
             'submitted_at' => $school->updated_at,
-            'disclaimer' => 'DISCLAIMER: By proceeding, you acknowledge that we will contact your school directly for verification and authentication purposes. This process may take 1-3 business days.',
+            'estimated_verification_time' => '3-5 business days',
             'school' => $school->toArray()
         ], 'Verification status retrieved');
     }

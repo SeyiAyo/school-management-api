@@ -1206,34 +1206,42 @@
                 "tags": [
                     "Onboarding"
                 ],
-                "summary": "Onboarding Step 2: Contact info",
-                "description": "Step 2: Contact and presence info",
+                "summary": "Onboarding Step 2: Contact info + Terms Acceptance",
+                "description": "Step 2: Contact info + Terms Acceptance",
                 "operationId": "ca1faabc54c9bcf57e661ff77adc401c",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
+                                "required": [
+                                    "email",
+                                    "phone",
+                                    "address",
+                                    "accept_terms"
+                                ],
                                 "properties": {
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "nullable": true
+                                        "example": "school@example.com"
                                     },
                                     "phone": {
                                         "type": "string",
-                                        "nullable": true
+                                        "example": "+1234567890"
                                     },
                                     "address": {
                                         "type": "string",
-                                        "nullable": true
+                                        "example": "123 School St, City, State"
                                     },
                                     "website": {
                                         "type": "string",
                                         "format": "uri",
+                                        "example": "https://school.edu",
                                         "nullable": true
                                     },
                                     "accept_terms": {
+                                        "description": "Must accept terms acknowledging school verification contact",
                                         "type": "boolean",
                                         "example": true
                                     }
@@ -1245,10 +1253,48 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Contact info saved"
+                        "description": "Contact info saved with disclaimer",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "School contact info saved"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "school": {
+                                                    "type": "object"
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "disclaimer": {
+                                                    "type": "string"
+                                                },
+                                                "next_step": {
+                                                    "type": "string",
+                                                    "example": "complete"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "403": {
                         "description": "Email not verified or not admin"
+                    },
+                    "422": {
+                        "description": "Terms not accepted"
                     }
                 },
                 "security": [
@@ -1263,32 +1309,12 @@
                 "tags": [
                     "Onboarding"
                 ],
-                "summary": "Onboarding Step 3: Submit for verification",
-                "description": "Step 3: Submit for verification",
+                "summary": "Onboarding Step 3: Complete onboarding (no action required)",
+                "description": "Step 3: Final confirmation screen - Complete onboarding",
                 "operationId": "2512c3293dc0240cdd6e435ec1466058",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "accept_verification_terms"
-                                ],
-                                "properties": {
-                                    "accept_verification_terms": {
-                                        "description": "User must accept that we will contact school for verification",
-                                        "type": "boolean",
-                                        "example": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
-                        "description": "Submitted for verification"
+                        "description": "Onboarding complete - awaiting verification"
                     },
                     "403": {
                         "description": "Email not verified or not admin"

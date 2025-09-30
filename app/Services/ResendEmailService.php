@@ -135,7 +135,7 @@ class ResendEmailService
      */
     private function extractVerificationUrl(string $html): ?string
     {
-        if (preg_match('/href=["\']([^"\']*)verify[^"\']*)["\']/i', $html, $matches)) {
+        if (preg_match('/href=["\']([^"\']*verify[^"\']*)["\']/i', $html, $matches)) {
             return $matches[1];
         }
 

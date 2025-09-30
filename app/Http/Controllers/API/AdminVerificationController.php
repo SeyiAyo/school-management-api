@@ -52,6 +52,23 @@ class AdminVerificationController extends Controller
             ->orderBy('updated_at', 'desc')
             ->get()
             ->map(function ($school) {
+                // Generate logo URL
+                $logoUrl = null;
+                if ($school->logo_path) {
+                    try {
+                        if (env('SUPABASE_URL') && env('SUPABASE_ACCESS_KEY_ID')) {
+                            $logoUrl = app(\App\Services\SupabaseStorageService::class)->getFileUrl($school->logo_path);
+                        } else {
+                            $logoUrl = asset('storage/' . $school->logo_path);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Error generating logo URL in controller', [
+                            'path' => $school->logo_path,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+                
                 return [
                     'id' => $school->id,
                     'name' => $school->name,
@@ -70,7 +87,7 @@ class AdminVerificationController extends Controller
                         'email' => $school->owner->email,
                         'registered_at' => $school->owner->created_at,
                     ],
-                    'logo_url' => $school->logo_path ? app(\App\Services\SupabaseStorageService::class)->getFileUrl($school->logo_path) : null,
+                    'logo_url' => $logoUrl,
                 ];
             });
 
@@ -140,9 +157,44 @@ class AdminVerificationController extends Controller
                     ? 'School has been verified successfully.'
                     : 'School verification has been rejected.';
 
-                // TODO: Send email notification to school admin
-                
+                // Send email notification to school admin and owner
                 $freshSchool = $school->fresh(['owner']);
+                $emailService = app(\App\Services\ResendEmailService::class);
+                $status = $validated['action'] === 'approve' ? 'approved' : 'rejected';
+                
+                // Send to school email
+                // if ($freshSchool->email) {
+                //     $emailService->sendSchoolVerificationStatus(
+                //         $freshSchool->email,
+                //         $freshSchool->name,
+                //         $status,
+                //         $validated['notes']
+                //     );
+                // }
+                
+                // Send to school owner email
+                if ($freshSchool->owner && $freshSchool->owner->email !== $freshSchool->email) {
+                    $emailService->sendSchoolVerificationStatus(
+                        $freshSchool->owner->email,
+                        $freshSchool->name,
+                        $status,
+                        $validated['notes']
+                    );
+                }
+                
+                // Generate logo URL
+                $logoUrl = null;
+                if ($freshSchool->logo_path) {
+                    try {
+                        if (env('SUPABASE_URL') && env('SUPABASE_ACCESS_KEY_ID')) {
+                            $logoUrl = app(\App\Services\SupabaseStorageService::class)->getFileUrl($freshSchool->logo_path);
+                        } else {
+                            $logoUrl = asset('storage/' . $freshSchool->logo_path);
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to generate logo URL', ['path' => $freshSchool->logo_path]);
+                    }
+                }
                 
                 return $this->success([
                     'school' => [
@@ -153,6 +205,7 @@ class AdminVerificationController extends Controller
                         'phone' => $freshSchool->phone,
                         'address' => $freshSchool->address,
                         'website' => $freshSchool->website,
+                        'logo_url' => $logoUrl,
                         'status' => $freshSchool->status,
                         'verified_at' => $freshSchool->verified_at,
                         'verification_notes' => $freshSchool->verification_notes,
@@ -169,9 +222,9 @@ class AdminVerificationController extends Controller
                         'verified_at' => $freshSchool->verified_at,
                         'notes' => $validated['notes'],
                     ],
-                    'next_steps' => $validated['action'] === 'approve' 
-                        ? 'School owner will receive approval notification and can access full system features.'
-                        : 'School owner will receive rejection notification with feedback for resubmission.',
+                    'message' => $validated['action'] === 'approve'
+                        ? 'School has been verified and approved. The school owner will receive an email notification and can now access all system features.'
+                        : 'School verification has been rejected. The school owner will receive an email notification with feedback and can resubmit after addressing the issues.',
                 ], $message);
             });
         } catch (\Exception $e) {
