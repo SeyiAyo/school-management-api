@@ -747,6 +747,59 @@
                 }
             }
         },
+        "/api/roles": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get all available user roles",
+                "description": "Get all available user roles",
+                "operationId": "c0b52183f6506d7c7fc75969e00fe018",
+                "responses": {
+                    "200": {
+                        "description": "Available user roles",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User roles retrieved"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "roles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "value": {
+                                                                "type": "string",
+                                                                "example": "admin"
+                                                            },
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "Administrator"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/admin/dashboard": {
             "get": {
                 "tags": [
@@ -4380,6 +4433,7 @@
                     "role": {
                         "type": "string",
                         "enum": [
+                            "super_admin",
                             "admin",
                             "teacher",
                             "student",
