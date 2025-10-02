@@ -67,6 +67,7 @@ class ResendEmailService
             $mail->Password   = config('mail.mailers.smtp.password');
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = config('mail.mailers.smtp.port', 587);
+            $mail->Timeout    = 30; // Connection timeout in seconds
             $mail->SMTPDebug  = 2;
             $mail->Debugoutput = function($str, $level) {
                 Log::info("PHPMailer Debug: $str", ['level' => $level]);
@@ -108,22 +109,15 @@ class ResendEmailService
             ]);
 
             // Fallback to logging for development if Gmail fails
-            Log::info('📧 EMAIL FALLBACK (Gmail Auth Failed - Logged Only)', [
+            Log::warning('📧 EMAIL NOT SENT - Gmail SMTP Failed', [
                 'to' => $to,
                 'from' => $fromAddress,
                 'subject' => $subject,
-                'verification_url' => $this->extractVerificationUrl($html),
-                'note' => 'Fix Gmail credentials to send real emails'
+                'note' => 'Configure Gmail App Password or use Resend API for production'
             ]);
 
-            return [
-                'id' => 'fallback-' . uniqid(),
-                'to' => [$to],
-                'from' => $fromAddress,
-                'subject' => $subject,
-                'created_at' => now()->toISOString(),
-                'status' => 'logged_fallback'
-            ];
+            // Return false to indicate failure
+            return false;
         }
     }
 

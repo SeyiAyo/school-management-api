@@ -162,20 +162,32 @@ class AdminVerificationController extends Controller
                 $emailService = app(\App\Services\ResendEmailService::class);
                 $status = $validated['action'] === 'approve' ? 'approved' : 'rejected';
                 
-                // Send to school email
-                // if ($freshSchool->email) {
-                //     $emailService->sendSchoolVerificationStatus(
-                //         $freshSchool->email,
-                //         $freshSchool->name,
-                //         $status,
-                //         $validated['notes']
-                //     );
-                // }
+                // Send to school owner email (primary notification)
+                if (!$freshSchool->owner || !$freshSchool->owner->email) {
+                    throw new \Exception('School owner email not found. Cannot send verification notification.');
+                }
                 
-                // Send to school owner email
-                if ($freshSchool->owner && $freshSchool->owner->email !== $freshSchool->email) {
+                $emailResult = $emailService->sendSchoolVerificationStatus(
+                    $freshSchool->owner->email,
+                    $freshSchool->name,
+                    $status,
+                    $validated['notes']
+                );
+                
+                if ($emailResult === false) {
+                    throw new \Exception('Failed to send verification email to school owner. Please check email configuration and try again.');
+                }
+                
+                Log::info('Verification email sent successfully', [
+                    'to' => $freshSchool->owner->email,
+                    'school' => $freshSchool->name,
+                    'status' => $status
+                ]);
+                
+                // Optionally send to school email if different
+                if ($freshSchool->email && $freshSchool->email !== $freshSchool->owner->email) {
                     $emailService->sendSchoolVerificationStatus(
-                        $freshSchool->owner->email,
+                        $freshSchool->email,
                         $freshSchool->name,
                         $status,
                         $validated['notes']
