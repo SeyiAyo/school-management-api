@@ -12,8 +12,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // For MySQL, we need to modify the existing enum column to include super_admin
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('super_admin', 'admin', 'teacher', 'student', 'parent') NOT NULL");
+        $driver = DB::connection()->getDriverName();
+        
+        if ($driver === 'mysql') {
+            // MySQL: Modify the existing enum column
+            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('super_admin', 'admin', 'teacher', 'student', 'parent') NOT NULL");
+        } elseif ($driver === 'pgsql') {
+            // PostgreSQL: Drop existing constraint and add new one with super_admin
+            DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+            DB::statement("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role::text = ANY (ARRAY['super_admin'::character varying, 'admin'::character varying, 'teacher'::character varying, 'student'::character varying, 'parent'::character varying]::text[]))");
+        }
     }
 
     /**
@@ -21,7 +29,16 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Remove super_admin from the enum (revert to original)
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'teacher', 'student', 'parent') NOT NULL");
+        $driver = DB::connection()->getDriverName();
+        
+        if ($driver === 'mysql') {
+            // MySQL: Remove super_admin from the enum
+            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'teacher', 'student', 'parent') NOT NULL");
+        } elseif ($driver === 'pgsql') {
+            // PostgreSQL: Update super_admin users to admin, then recreate constraint
+            DB::statement("UPDATE users SET role = 'admin' WHERE role = 'super_admin'");
+            DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+            DB::statement("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role::text = ANY (ARRAY['admin'::character varying, 'teacher'::character varying, 'student'::character varying, 'parent'::character varying]::text[]))");
+        }
     }
 };
