@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\Role;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -21,7 +22,7 @@ use OpenApi\Annotations as OA;
  *     @OA\Property(
  *         property="role", 
  *         type="string", 
- *         enum={"admin", "teacher", "student", "parent"},
+ *         enum={"super_admin", "admin", "teacher", "student", "parent"},
  *         example="teacher"
  *     ),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
@@ -29,7 +30,7 @@ use OpenApi\Annotations as OA;
  * )
  */
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
@@ -66,6 +67,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => Role::class,
         ];
     }
     
@@ -93,5 +95,76 @@ class User extends Authenticatable
     public function parent()
     {
         return $this->hasOne(ParentModel::class);
+    }
+
+    /**
+     * Check if user has admin role (admin or super_admin)
+     *
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role->isAdmin();
+    }
+
+    /**
+     * Check if user has super admin role
+     *
+     * @return bool
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role->isSuperAdmin();
+    }
+
+    /**
+     * Check if user has specific role
+     *
+     * @param Role $role
+     * @return bool
+     */
+    public function hasRole(Role $role): bool
+    {
+        return $this->role === $role;
+    }
+
+    /**
+     * Send the email verification notification using ResendEmailService.
+     *
+     * @return void
+     */
+    public function sendEmailVerificationNotification()
+    {
+        try {
+            // Generate OTP for email verification
+            $otpService = app(\App\Services\OtpService::class);
+            $otp = $otpService->generateOtp($this, $this->getEmailForVerification());
+            
+            // Use ResendEmailService to send the OTP email
+            $resendService = app(\App\Services\ResendEmailService::class);
+            
+            $result = $resendService->sendEmailVerification(
+                $this->getEmailForVerification(),
+                $otp->otp_code,
+                $this->name
+            );
+
+            if ($result === false) {
+                throw new \Exception('Failed to send OTP email verification');
+            }
+
+            \Illuminate\Support\Facades\Log::info('Email verification sent successfully', [
+                'user_id' => $this->id,
+                'email' => $this->getEmailForVerification()
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send email verification', [
+                'user_id' => $this->id,
+                'email' => $this->getEmailForVerification(),
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 }

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Verification Status</title>
+</head>
+<body>
+    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
+        <div style='background-color: #f8f9fa; padding: 30px; border-radius: 10px;'>
+            <h1 style='color: #2c3e50; margin-bottom: 20px;'>School Verification Update</h1>
+            <h2 style='color: #3498db; margin-bottom: 15px;'>{{schoolName}}</h2>
+            
+            {{#if isApproved}}
+            <div style='background-color: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin-bottom: 20px;'>
+                <strong>✅ Congratulations! Your school has been verified and approved.</strong>
+            </div>
+            {{else}}
+            <div style='background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px;'>
+                <strong>❌ Your school verification requires attention.</strong>
+            </div>
+            {{/if}}
+            
+            <p style='color: #555; font-size: 16px; line-height: 1.6; margin-bottom: 20px;'>
+                {{message}}
+            </p>
+            
+            {{#if notes}}
+            <div style='background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin-bottom: 20px;'>
+                <strong>Additional Notes:</strong><br>
+                {{notes}}
+            </div>
+            {{/if}}
+            
+            <p style='color: #777; font-size: 14px; margin-top: 30px;'>
+                If you have any questions, please contact our support team.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

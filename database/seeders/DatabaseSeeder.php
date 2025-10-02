@@ -14,7 +14,10 @@ class DatabaseSeeder extends Seeder
     {
         // Call seeders in the correct order to respect foreign key constraints
         $this->call([
-            // First seed admin users
+            // First seed super admin
+            SuperAdminSeeder::class,
+            
+            // Then seed admin users
             AdminSeeder::class,
             
             // Then seed parents (before students since students reference parents)

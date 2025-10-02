@@ -10,6 +10,9 @@ use App\Http\Controllers\API\Attendance;
 use App\Http\Controllers\API\SchoolClass;
 use App\Http\Controllers\API\ParentController;
 use App\Http\Controllers\API\SubjectController;
+use App\Http\Controllers\API\EmailVerificationController;
+use App\Http\Controllers\API\OnboardingController;
+use App\Http\Controllers\API\AdminVerificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +57,25 @@ Route::middleware(\App\Http\Middleware\DebugCorsMiddleware::class)->group(functi
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+
+        // OTP email verification routes
+        Route::post('/email/verify-otp', [EmailVerificationController::class, 'verifyOtp'])
+            ->middleware('throttle:10,1');
+        Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
+            ->middleware('throttle:6,1');
+
+        // Onboarding routes (email must be verified; controller enforces)
+        Route::get('/onboarding/status', [OnboardingController::class, 'getStatus']);
+        Route::post('/onboarding/school-profile/step-1', [OnboardingController::class, 'step1']);
+        Route::post('/onboarding/school-profile/step-2', [OnboardingController::class, 'step2']);
+        Route::post('/onboarding/school-profile/complete', [OnboardingController::class, 'complete']);
+        Route::get('/onboarding/verification-status', [OnboardingController::class, 'verificationStatus']);
+
+        // Admin verification routes (super admin only)
+        // todo: create super admin
+        Route::get('/admin/schools/pending-verification', [AdminVerificationController::class, 'getPendingSchools']);
+        Route::post('/admin/schools/{school}/verify', [AdminVerificationController::class, 'verifySchool']);
+        Route::get('/admin/verification/stats', [AdminVerificationController::class, 'getVerificationStats']);
 
         // Resource routes
         Route::apiResource('teachers', Teacher::class)->parameters([

@@ -2,45 +2,96 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\ParentModel;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
 {
     /**
+     * Get valid school administrator positions (internal format)
+     *
+     * @return array
+     */
+    public static function getValidPositions(): array
+    {
+        return [
+            'principal',
+            'owner',
+            'director',
+            'headmaster',
+            'headmistress',
+            'administrator',
+            'vice principal',
+            'deputy head',
+            'academic director',
+            'school manager'
+        ];
+    }
+
+    /**
+     * Get valid positions with both formats for validation
+     *
+     * @return array
+     */
+    public static function getAllValidPositionFormats(): array
+    {
+        $positions = self::getValidPositions();
+        $allFormats = [];
+        
+        foreach ($positions as $position) {
+            $allFormats[] = $position; // Original format
+            $allFormats[] = str_replace(' ', '_', $position); // Underscore format
+            $allFormats[] = ucwords($position); // Title case
+            $allFormats[] = ucwords(str_replace(' ', '_', $position)); // Title case with underscores
+        }
+        
+        return array_unique($allFormats);
+    }
+    /**
      * @OA\Post(
      *     path="/api/register",
-     *     summary="Register new user with admin role",
+     *     summary="Register school administrator (email verification required)",
      *     tags={"Authentication"},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","email","password","password_confirmation"},
-     *             @OA\Property(property="name", type="string", example="John Doe", maxLength=255),
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com", maxLength=255),
+     *             required={"first_name","last_name","email","password","password_confirmation","position"},
+     *             @OA\Property(property="first_name", type="string", example="John", maxLength=100),
+     *             @OA\Property(property="last_name", type="string", example="Doe", maxLength=100),
+     *             @OA\Property(property="email", type="string", format="email", example="admin@school.com", maxLength=255),
      *             @OA\Property(property="password", type="string", format="password", example="password123", minLength=8),
-     *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123", description="Must match the password field")
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123", description="Must match the password field"),
+     *             @OA\Property(property="phone", type="string", example="+2348012345678", maxLength=20),
+     *             @OA\Property(
+     *                 property="position", 
+     *                 type="string", 
+     *                 enum={"Principal", "Owner", "Director", "Headmaster", "Headmistress", "Administrator", "Vice Principal", "Deputy Head", "Academic Director", "School Manager"},
+     *                 example="Principal",
+     *                 description="School administrator position (accepts various formats: 'Principal', 'vice principal', 'Vice_Principal', etc.)"
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="User registered successfully",
+     *         description="Administrator registered; verification email sent",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="User registered successfully"),
+     *             @OA\Property(property="message", type="string", example="Registration successful. Please verify your email."),
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="user", type="object"),
      *                 @OA\Property(property="role", type="string", example="admin"),
-     *                 @OA\Property(property="access_token", type="string", example="1|abcdef123456"),
-     *                 @OA\Property(property="token_type", type="string", example="Bearer")
+     *                 @OA\Property(property="requires_email_verification", type="boolean", example=true),
+     *                 @OA\Property(property="verification_token", type="string", example="1|abcdef123456", description="Temporary token for email verification")
      *             )
      *         )
      *     ),
@@ -56,6 +107,9 @@ class AuthController extends Controller
      *                 ),
      *                 @OA\Property(property="password", type="array",
      *                     @OA\Items(type="string", example="The password confirmation does not match.")
+     *                 ),
+     *                 @OA\Property(property="position", type="array",
+     *                     @OA\Items(type="string", example="The selected position is invalid.")
      *                 )
      *             )
      *         )
@@ -74,28 +128,36 @@ class AuthController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
+                'first_name' => 'required|string|max:100',
+                'last_name' => 'required|string|max:100',
+                'email' => 'required|string|email|max:255|unique:users,email',
                 'password' => 'required|string|min:8|confirmed',
+                'phone' => 'nullable|string|max:20',
+                'position' => 'required|string|in:' . implode(',', self::getAllValidPositionFormats()),
             ]);
+
+            $fullName = trim($validated['first_name'] . ' ' . $validated['last_name']);
 
             // Create user with admin role
             $user = User::create([
-                'name' => $validated['name'],
+                'name' => $fullName,
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'role' => 'admin',
+                'role' => Role::ADMIN,
             ]);
 
-            // Create token with admin ability
-            $token = $user->createToken('auth_token', ['role:admin'])->plainTextToken;
+            // Send email verification notification
+            $user->sendEmailVerificationNotification();
+
+            // Issue temporary verification token for OTP verification
+            $tempToken = $user->createToken('email-verification', ['email-verification'])->plainTextToken;
 
             return $this->success([
                     'user' => $user,
                     'role' => 'admin',
-                    'access_token' => $token,
-                    'token_type' => 'Bearer',
-            ], 'User registered successfully', Response::HTTP_CREATED);
+                    'requires_email_verification' => true,
+                    'verification_token' => $tempToken,
+            ], 'Registration successful. Please verify your email.', Response::HTTP_CREATED);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->error(
@@ -143,7 +205,14 @@ class AuthController extends Controller
      *                 ),
      *                 @OA\Property(property="role", type="string", example="teacher"),
      *                 @OA\Property(property="access_token", type="string", example="1|abcdef123456"),
-     *                 @OA\Property(property="token_type", type="string", example="Bearer")
+     *                 @OA\Property(property="token_type", type="string", example="Bearer"),
+     *                 @OA\Property(property="onboarding_status", type="object", nullable=true,
+     *                     description="Onboarding status for admin users only",
+     *                     @OA\Property(property="current_step", type="integer", nullable=true, example=2),
+     *                     @OA\Property(property="completed_steps", type="array", @OA\Items(type="integer")),
+     *                     @OA\Property(property="is_complete", type="boolean", example=false),
+     *                     @OA\Property(property="requires_onboarding", type="boolean", example=true)
+     *                 )
      *             )
      *         )
      *     ),
@@ -154,9 +223,19 @@ class AuthController extends Controller
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Invalid credentials"),
      *             @OA\Property(property="errors", type="object",
-     *                 @OA\Property(property="email", type="array",
-     *                     @OA\Items(type="string", example="The provided credentials are incorrect.")
-     *                 )
+     *                 @OA\Property(property="email", type="array", @OA\Items(type="string", example="Invalid credentials"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Email not verified",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Please verify your email address before logging in. Check your inbox for the verification link."),
+     *             @OA\Property(property="errors", type="object",
+     *                 @OA\Property(property="requires_email_verification", type="boolean", example=true),
+     *                 @OA\Property(property="email", type="string", example="admin@school.com")
      *             )
      *         )
      *     ),
@@ -194,40 +273,89 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
 
-            // Find user in the central users table
-            $user = User::where('email', $credentials['email'])->first();
+            if (! Auth::attempt($credentials)) {
+                return $this->error('Invalid credentials', Response::HTTP_UNAUTHORIZED);
+            }
 
-            if (!$user || !Hash::check($credentials['password'], $user->password)) {
-                return $this->error(
-                    'Invalid credentials',
-                    Response::HTTP_UNAUTHORIZED,
-                    ['email' => ['The provided credentials are incorrect.']]
-                );
+            $user = Auth::user();
+
+            // Check if email is verified for admin users
+            if ($user->hasRole(Role::ADMIN) && !$user->hasVerifiedEmail()) {
+                Auth::logout();
+                return $this->error('Please verify your email address before logging in. Check your inbox for the verification link.', Response::HTTP_FORBIDDEN, [
+                    'requires_email_verification' => true,
+                    'email' => $user->email
+                ]);
             }
 
             // Create token with role-specific ability
-            $token = $user->createToken('auth_token', ['role:' . $user->role])->plainTextToken;
+            $token = $user->createToken('auth_token', ['role:' . $user->role->value])->plainTextToken;
 
             // Get the profile data based on role
             $profile = null;
             switch ($user->role) {
-                case 'student':
+                case Role::STUDENT:
                     $profile = Student::where('user_id', $user->id)->first();
                     break;
-                case 'teacher':
+                case Role::TEACHER:
                     $profile = Teacher::where('user_id', $user->id)->first();
                     break;
-                case 'parent':
+                case Role::PARENT:
                     $profile = ParentModel::where('user_id', $user->id)->first();
                     break;
+            }
+
+            // Check onboarding status for admins
+            $onboardingStatus = null;
+            if ($user->hasRole(Role::ADMIN)) {
+                $school = \App\Models\School::where('owner_user_id', $user->id)->first();
+
+                $currentStep = 1;
+                $completedSteps = [];
+                $isComplete = false;
+
+                if ($school) {
+                    // Step 1: Basic school info
+                    if ($school->name && $school->type) {
+                        $completedSteps[] = 1;
+                        $currentStep = 2;
+                    }
+
+                    // Step 2: Contact info and terms
+                    if (in_array(1, $completedSteps) && ($school->email || $school->phone || $school->address)) {
+                        $completedSteps[] = 2;
+                        $currentStep = 3;
+                    }
+
+                    // Step 3: Submit for verification
+                    if (in_array(2, $completedSteps) && $school->status === 'active') {
+                        $completedSteps[] = 3;
+                        $currentStep = 4;
+                    }
+
+                    // Step 4: Verification complete
+                    if (in_array(3, $completedSteps) && $school->status === 'verified') {
+                        $completedSteps[] = 4;
+                        $currentStep = null;
+                        $isComplete = true;
+                    }
+                }
+
+                $onboardingStatus = [
+                    'current_step' => $currentStep,
+                    'completed_steps' => $completedSteps,
+                    'is_complete' => $isComplete,
+                    'requires_onboarding' => !$isComplete,
+                ];
             }
 
             return $this->success([
                     'user' => $user,
                     'profile' => $profile,
-                    'role' => $user->role,
+                    'role' => $user->role->value,
                     'access_token' => $token,
                     'token_type' => 'Bearer',
+                    'onboarding_status' => $onboardingStatus,
             ], 'Login successful');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -302,5 +430,76 @@ class AuthController extends Controller
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
+    }
+
+    /**
+     * Get valid administrator positions for dropdown
+     *
+     * @OA\Get(
+     *     path="/api/admin-positions",
+     *     summary="Get valid administrator positions",
+     *     tags={"Authentication"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Valid administrator positions",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Administrator positions retrieved"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="positions", type="array", 
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="value", type="string", example="principal"),
+     *                         @OA\Property(property="label", type="string", example="Principal")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getAdminPositions()
+    {
+        $positions = collect(self::getValidPositions())->map(function ($position) {
+            return [
+                'value' => ucwords($position), // Clean format for frontend
+                'label' => ucwords($position)  // Same as value, user-friendly
+            ];
+        });
+
+        return $this->success([
+            'positions' => $positions
+        ], 'Administrator positions retrieved');
+    }
+
+    /**
+     * Get all available user roles
+     *
+     * @OA\Get(
+     *     path="/api/roles",
+     *     summary="Get all available user roles",
+     *     tags={"Authentication"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Available user roles",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="User roles retrieved"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="roles", type="array", 
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="value", type="string", example="admin"),
+     *                         @OA\Property(property="label", type="string", example="Administrator")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getRoles()
+    {
+        return $this->success([
+            'roles' => Role::options()
+        ], 'User roles retrieved');
     }
 }
