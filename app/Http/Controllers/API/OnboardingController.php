@@ -19,7 +19,6 @@ class OnboardingController extends Controller
 
     public function __construct(SupabaseStorageService $storageService)
     {
-        $this->middleware('auth:sanctum');
         $this->storageService = $storageService;
     }
 
@@ -110,7 +109,7 @@ class OnboardingController extends Controller
         if ($school && $school->logo_path) {
             try {
                 $useSupabase = env('SUPABASE_URL') && env('SUPABASE_ACCESS_KEY_ID');
-                
+
                 if ($useSupabase) {
                     $schoolData['logo_url'] = $this->storageService->getFileUrl($school->logo_path);
                 } else {
@@ -195,11 +194,11 @@ class OnboardingController extends Controller
                 if ($request->hasFile('logo')) {
                     // Check if Supabase is configured
                     $useSupabase = env('SUPABASE_URL') && env('SUPABASE_ACCESS_KEY_ID');
-                    
+
                     if ($useSupabase) {
                         // Use Supabase storage (production)
                         Log::info('Using Supabase storage for logo upload');
-                        
+
                         // Delete old logo if exists
                         if ($school->logo_path) {
                             $deleteResult = $this->storageService->deleteFile($school->logo_path);
@@ -214,12 +213,12 @@ class OnboardingController extends Controller
                             Log::error('Failed to upload logo to Supabase');
                             throw new \Exception('Failed to upload logo. Please try again or contact administrator.');
                         }
-                        
+
                         $school->logo_path = $logoPath;
                     } else {
                         // Fallback to local storage (development)
                         Log::info('Using local storage for logo upload (Supabase not configured)');
-                        
+
                         // Delete old logo if exists
                         if ($school->logo_path && Storage::disk('public')->exists($school->logo_path)) {
                             Storage::disk('public')->delete($school->logo_path);
@@ -232,7 +231,7 @@ class OnboardingController extends Controller
                             Log::error('Failed to upload logo to local storage');
                             throw new \Exception('Failed to upload logo. Please try again.');
                         }
-                        
+
                         Log::info('Logo uploaded to local storage', ['path' => $logoPath]);
                         $school->logo_path = $logoPath;
                     }
@@ -249,7 +248,7 @@ class OnboardingController extends Controller
                     try {
                         // Check if using Supabase or local storage
                         $useSupabase = env('SUPABASE_URL') && env('SUPABASE_ACCESS_KEY_ID');
-                        
+
                         if ($useSupabase) {
                             $schoolData['logo_url'] = $this->storageService->getFileUrl($school->logo_path);
                         } else {
@@ -272,14 +271,14 @@ class OnboardingController extends Controller
                 'user_id' => Auth::id(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Return specific error message if available
-            $errorMessage = str_contains($e->getMessage(), 'storage') || 
+            $errorMessage = str_contains($e->getMessage(), 'storage') ||
                            str_contains($e->getMessage(), 'upload') ||
                            str_contains($e->getMessage(), 'configured')
                 ? $e->getMessage()
                 : 'Failed to save school identity. Please try again.';
-            
+
             return $this->error($errorMessage, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
