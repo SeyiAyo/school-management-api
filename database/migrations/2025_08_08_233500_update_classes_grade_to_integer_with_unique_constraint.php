@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,17 +12,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, drop the existing grade column if it exists
-        if (Schema::hasColumn('classes', 'grade')) {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'pgsql') {
+            // PostgreSQL: Use raw SQL to handle column modification
+            DB::statement('ALTER TABLE classes DROP COLUMN IF EXISTS grade');
+            DB::statement('ALTER TABLE classes ADD COLUMN grade INTEGER UNIQUE');
+        } else {
+            // MySQL: Use Schema builder
+            if (Schema::hasColumn('classes', 'grade')) {
+                Schema::table('classes', function (Blueprint $table) {
+                    $table->dropColumn('grade');
+                });
+            }
+
             Schema::table('classes', function (Blueprint $table) {
-                $table->dropColumn('grade');
+                $table->integer('grade')->unique()->after('name');
             });
         }
-        
-        // Then add new grade column as integer with unique constraint
-        Schema::table('classes', function (Blueprint $table) {
-            $table->integer('grade')->unique()->after('name');
-        });
     }
 
     /**
@@ -33,7 +41,7 @@ return new class extends Migration
             // Drop the unique constraint and column
             $table->dropUnique(['grade']);
             $table->dropColumn('grade');
-            
+
             // Restore original grade column as string
             $table->string('grade', 50)->after('name');
         });
