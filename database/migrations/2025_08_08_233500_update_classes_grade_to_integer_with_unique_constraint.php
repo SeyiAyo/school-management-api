@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('classes', function (Blueprint $table) {
-            // First, drop the existing grade column if it exists
-            if (Schema::hasColumn('classes', 'grade')) {
+        // First, drop the existing grade column if it exists
+        if (Schema::hasColumn('classes', 'grade')) {
+            Schema::table('classes', function (Blueprint $table) {
                 $table->dropColumn('grade');
-            }
-            
-            // Add new grade column as integer with unique constraint
+            });
+        }
+        
+        // Then add new grade column as integer with unique constraint
+        Schema::table('classes', function (Blueprint $table) {
             $table->integer('grade')->unique()->after('name');
         });
     }
