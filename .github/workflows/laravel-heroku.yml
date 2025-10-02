@@ -142,6 +142,9 @@ jobs:
         # Run migrations
         heroku run "php artisan migrate --force" --app ${{ secrets.HEROKU_APP_NAME }}
 
+        # Run seeders
+        heroku run "php artisan db:seed --force --class=SuperAdminSeeder" --app ${{ secrets.HEROKU_APP_NAME }}
+
         # Generate Swagger documentation
         heroku run "php artisan l5-swagger:generate" --app ${{ secrets.HEROKU_APP_NAME }}
 
