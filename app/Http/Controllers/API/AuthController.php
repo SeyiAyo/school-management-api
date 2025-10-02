@@ -136,28 +136,39 @@ class AuthController extends Controller
                 'position' => 'required|string|in:' . implode(',', self::getAllValidPositionFormats()),
             ]);
 
-            $fullName = trim($validated['first_name'] . ' ' . $validated['last_name']);
+            return DB::transaction(function () use ($validated) {
+                $fullName = trim($validated['first_name'] . ' ' . $validated['last_name']);
 
-            // Create user with admin role
-            $user = User::create([
-                'name' => $fullName,
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role' => Role::ADMIN,
-            ]);
+                // Create user with admin role
+                $user = User::create([
+                    'name' => $fullName,
+                    'email' => $validated['email'],
+                    'password' => Hash::make($validated['password']),
+                    'role' => Role::ADMIN,
+                ]);
 
-            // Send email verification notification
-            $user->sendEmailVerificationNotification();
+                // Send email verification notification
+                try {
+                    $user->sendEmailVerificationNotification();
+                } catch (\Exception $e) {
+                    Log::error('Failed to send verification email', [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'error' => $e->getMessage()
+                    ]);
+                    throw new \Exception('Failed to send verification email. Please check your email configuration.');
+                }
 
-            // Issue temporary verification token for OTP verification
-            $tempToken = $user->createToken('email-verification', ['email-verification'])->plainTextToken;
+                // Issue temporary verification token for OTP verification
+                $tempToken = $user->createToken('email-verification', ['email-verification'])->plainTextToken;
 
-            return $this->success([
-                    'user' => $user,
-                    'role' => 'admin',
-                    'requires_email_verification' => true,
-                    'verification_token' => $tempToken,
-            ], 'Registration successful. Please verify your email.', Response::HTTP_CREATED);
+                return $this->success([
+                        'user' => $user,
+                        'role' => 'admin',
+                        'requires_email_verification' => true,
+                        'verification_token' => $tempToken,
+                ], 'Registration successful. Please verify your email.', Response::HTTP_CREATED);
+            });
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->error(
