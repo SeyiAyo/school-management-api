@@ -30,7 +30,7 @@ class OnboardingController extends Controller
     {
         $user = Auth::user();
         if (! $user) {
-            abort(Response::HTTP_UNAUTHORIZED);
+            return $this->error('Unauthenticated. Please login to access this resource.', Response::HTTP_UNAUTHORIZED);
         }
         if (! $user->hasVerifiedEmail()) {
             return $this->error('Email not verified. Please verify to continue onboarding.', Response::HTTP_FORBIDDEN);
